@@ -1,0 +1,40 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="Content-Language" content="en" />
+    <title>s6-linux-utils: the s6-chroot program</title>
+    <meta name="Description" content="s6-linux-utils: the s6-chroot program" />
+    <meta name="Keywords" content="s6-linux-utils linux utilities chroot" />
+    <!-- <link rel="stylesheet" type="text/css" href="http://skarnet.org/default.css" /> -->
+  </head>
+<body>
+
+<p>
+<a href="index.html">s6-linux-utils</a><br />
+<a href="http://skarnet.org/software/">Software</a><br />
+<a href="http://skarnet.org/">skarnet.org</a>
+</p>
+
+<h1> The <tt>s6-chroot</tt> program </h1>
+
+<p>
+<tt>s6-chroot</tt> executes a program in a chroot jail.
+</p>
+
+<h2> Interface </h2>
+
+<pre>
+     s6-chroot <em>newroot</em> <em>prog...</em>
+</pre>
+
+<ul>
+ <li> <tt>s6-chroot</tt> sets the root filesystem for the current
+process to <em>newroot</em>, which must be an existing directory. </li>
+ <li> <tt>s6-chroot</tt> changes directory to this new root, and
+executes <em>prog</em>
+with its arguments. <em>prog</em> is searched under the new root. </li>
+ <li> s6-chroot's parent process is unaffected by the root change. </li>
+</ul>
+
+</body>
+</html>

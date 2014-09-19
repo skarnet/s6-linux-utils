@@ -1,0 +1,126 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="Content-Language" content="en" />
+    <title>s6-linux-utils - skarnet's tiny Linux-specific utilities</title>
+    <meta name="Description" content="s6-linux-utils - skarnet's tiny Linux-specific utilities" />
+    <meta name="Keywords" content="s6 unix administration root laurent bercot ska skarnet linux utilities tiny linux-specific" />
+    <!-- <link rel="stylesheet" type="text/css" href="http://skarnet.org/default.css" /> -->
+  </head>
+<body>
+
+<p>
+<a href="http://skarnet.org/software/">Software</a><br />
+<a href="http://skarnet.org/">skarnet.org</a>
+</p>
+
+<h1> s6-linux-utils </h1>
+
+<h2> What is it&nbsp;? </h2>
+
+<p>
+ s6-linux-utils is a set of minimalistic Linux-specific system utilities.
+</p>
+
+<hr />
+
+<h2> Installation </h2>
+
+<h3> Requirements </h3>
+
+<ul>
+ <li> A POSIX-compliant system with a standard C development environment </li>
+ <li> GNU make, version 3.81 or later </li>
+ <li> <a href="http://skarnet.org/software/skalibs/">skalibs</a> version
+2.0.0.0 or later </li>
+</ul>
+
+<h3> Licensing </h3>
+
+<p>
+ s6-linux-utils is free software. It is available under the
+<a href="http://opensource.org/licenses/ISC">ISC license</a>.
+</p>
+
+<h3> Download </h3>
+
+<ul>
+ <li> The current released version of s6-linux-utils is <a href="s6-linux-utils-2.0.0.0.tar.gz">2.0.0.0</a>. </li>
+ <li> Alternatively, you can checkout a copy of the s6-linux-utils git repository:
+<pre> git clone git://git.skarnet.org/s6-linux-utils </pre> </li>
+</ul>
+
+<h3> Compilation </h3>
+
+<ul>
+ <li> See the enclosed INSTALL file for installation details. </li>
+</ul>
+
+<h3> Upgrade notes </h3>
+
+<ul>
+ <li> <a href="upgrade.html">This page</a> lists the differences to be aware of between
+the previous versions of s6-linux-utils and the current one. </li>
+</ul>
+
+<hr />
+
+<h2> Reference </h2>
+
+<h3> Commands </h3>
+
+<p>
+ All these commands exit 111 if they encounter a temporary error, and
+100 if they encounter a permanent error - such as a misuse.
+</p>
+
+<ul>
+<li><a href="s6-chroot.html">The <tt>s6-chroot</tt> program</a></li>
+<li><a href="s6-devd.html">The <tt>s6-devd</tt> program</a></li>
+<li><a href="s6-freeramdisk.html">The <tt>s6-freeramdisk</tt> program</a></li>
+<li><a href="s6-halt.html">The <tt>s6-halt</tt> program</a></li>
+<li><a href="s6-hiercopy.html">The <tt>s6-hiercopy</tt> program</a></li>
+<li><a href="s6-hostname.html">The <tt>s6-hostname</tt> program</a></li>
+<li><a href="s6-logwatch.html">The <tt>s6-logwatch</tt> program</a></li>
+<li><a href="s6-mount.html">The <tt>s6-mount</tt> program</a></li>
+<li><a href="s6-pivotchroot.html">The <tt>s6-pivotchroot</tt> program</a></li>
+<li><a href="s6-poweroff.html">The <tt>s6-poweroff</tt> program</a></li>
+<li><a href="s6-ps.html">The <tt>s6-ps</tt> program</a></li>
+<li><a href="s6-reboot.html">The <tt>s6-reboot</tt> program</a></li>
+<li><a href="s6-swapoff.html">The <tt>s6-swapoff</tt> program</a></li>
+<li><a href="s6-swapon.html">The <tt>s6-swapon</tt> program</a></li>
+<li><a href="s6-umount.html">The <tt>s6-umount</tt> program</a></li>
+</ul>
+
+<h2> Related resources </h2>
+
+<ul>
+ <li> <tt>s6-linux-utils</tt> is discussed on the
+<a href="http://skarnet.org/lists.html#skaware">skaware</a> mailing-list. </li>
+</ul>
+
+<h2> Similar work </h2>
+
+<p>
+ There are several good projects aiming to provide a minimal userspace
+environment for Linux, suitable for embedded systems. Among them, for
+instance:
+</p>
+
+<ul>
+ <li> <a href="http://busybox.net/">BusyBox</a> </li>
+ <li> <a href="http://landley.net/code/toybox/">toybox</a> </li>
+</ul>
+
+<p>
+ Most of the time, these projects aim to implement standard commands in a
+lightweight way, and
+they do it well enough. So, although some standard reimplentation already
+exists in s6-linux-utils and its sibling package
+<a href="http://skarnet.org/software/s6-portable-utils/">s6-portable-utils</a>,
+it is an explicit non-goal of those packages to duplicate the work of those
+projects, and no more rewriting of standard commands will occur.
+</p>
+
+</body>
+</html>

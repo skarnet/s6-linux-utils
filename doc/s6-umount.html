@@ -1,0 +1,38 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="Content-Language" content="en" />
+    <title>s6-linux-utils: the s6-umount program</title>
+    <meta name="Description" content="s6-linux-utils: the s6-umount program" />
+    <meta name="Keywords" content="s6 linux administration root linux utilities umount unmount filesystem" />
+    <!-- <link rel="stylesheet" type="text/css" href="http://skarnet.org/default.css" /> -->
+  </head>
+<body>
+
+<p>
+<a href="index.html">s6-linux-utils</a><br />
+<a href="http://skarnet.org/software/">Software</a><br />
+<a href="http://skarnet.org/">skarnet.org</a>
+</p>
+
+<h1> The <tt>s6-umount</tt> program </h1>
+
+<p>
+ <tt>s6-umount</tt> unmounts filesystems.
+</p>
+
+<h2> Interface </h2>
+
+<pre>
+     s6-umount [ -a | <em>mntpoint</em> ]
+</pre>
+
+<ul>
+ <li> <tt>s6-umount -a</tt> unmounts all partitions according to <tt>/proc/mounts</tt>. </li>
+ <li> If the <tt>-a</tt> option is not given,
+<tt>s6-umount</tt> unmounts the filesystem mounted on <em>mntpoint</em>. </li>
+ <li> <tt>s6-umount</tt> does not touch <tt>/etc/mtab</tt>. </li>
+</ul>
+
+</body>
+</html>

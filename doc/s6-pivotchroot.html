@@ -1,0 +1,41 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="Content-Language" content="en" />
+    <title>s6-linux-utils: the s6-pivotchroot program</title>
+    <meta name="Description" content="s6-linux-utils: the pivotchroot program" />
+    <meta name="Keywords" content="s6 linux administration root utilities pivot_root chroot pivotchroot" />
+    <!-- <link rel="stylesheet" type="text/css" href="http://skarnet.org/default.css" /> -->
+  </head>
+<body>
+
+<p>
+<a href="index.html">s6-linux-utils</a><br />
+<a href="http://skarnet.org/software/">Software</a><br />
+<a href="http://skarnet.org/">skarnet.org</a>
+</p>
+
+<h1> The <tt>s6-pivotchroot</tt> program </h1>
+
+<p>
+<tt>s6-pivotchroot</tt> performs a <em>pivot_root</em> system call,
+then changes root to the new root filesystem and executes a program.
+</p>
+
+<h2> Interface </h2>
+
+<pre>
+     s6-pivotchroot <em>newroot</em> <em>putold</em> <em>prog...</em>
+</pre>
+
+<ul>
+ <li> <tt>s6-pivotchroot</tt> sets the root filesystem to <em>newroot</em>,
+which must be a mounted filesystem entry point. The old root filesystem
+will be available under <em>putold</em> (relative to the old root). </li>
+ <li> <tt>s6-pivotchroot</tt> changes directory to the new root, performs
+a <em>chroot</em> system call to the new root, and executes <em>prog</em>
+with its arguments. <em>prog</em> is searched under the new root. </li>
+</ul>
+
+</body>
+</html>

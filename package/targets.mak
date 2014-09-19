@@ -1,0 +1,22 @@
+BIN_TARGETS = \
+s6-chroot \
+s6-devd \
+s6-freeramdisk \
+s6-halt \
+s6-hiercopy \
+s6-hostname \
+s6-logwatch \
+s6-mount \
+s6-pivotchroot \
+s6-poweroff \
+s6-ps \
+s6-reboot \
+s6-swapoff \
+s6-swapon \
+s6-umount \
+
+SBIN_TARGETS =
+LIBEXEC_TARGETS =
+
+SHARED_LIBS =
+STATIC_LIBS =

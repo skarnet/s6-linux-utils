@@ -1,0 +1,8 @@
+s6ps_statparse.o
+s6ps_otree.o
+s6ps_pfield.o
+s6ps_pwcache.o
+s6ps_grcache.o
+s6ps_ttycache.o
+s6ps_wchan.o
+-lskarnet

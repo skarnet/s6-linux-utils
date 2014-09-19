@@ -1,0 +1,52 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="Content-Language" content="en" />
+    <title>s6-linux-utils: the s6-mount program</title>
+    <meta name="Description" content="s6-linux-utils: the s6-mount program" />
+    <meta name="Keywords" content="s6 linux administration root utilities mount" />
+    <!-- <link rel="stylesheet" type="text/css" href="http://skarnet.org/default.css" /> -->
+  </head>
+<body>
+
+<p>
+<a href="index.html">s6-linux-utils</a><br />
+<a href="http://skarnet.org/software/">Software</a><br />
+<a href="http://skarnet.org/">skarnet.org</a>
+</p>
+
+<h1> The <tt>s6-mount</tt> program </h1>
+
+<p>
+<tt>s6-mount</tt> mounts filesystems.
+</p>
+
+<h2> Interface </h2>
+
+<pre>
+     s6-mount -a
+     s6-mount [ -r | -w ] [ -t fstype ] [ -o option[,option...] ] <em>device</em> <em>mntpoint</em>
+</pre>
+
+<ul>
+ <li> <tt>s6-mount -a</tt> mounts all partitions according to <tt>/etc/fstab</tt>. </li>
+ <li> If the <tt>-a</tt> option is not given,
+<tt>s6-mount</tt> mounts <em>device</em> on <em>mntpoint</em>. </li>
+ <li> <tt>s6-mount</tt> does not touch <tt>/etc/mtab</tt>. </li>
+</ul>
+
+<h2> Options </h2>
+
+<ul>
+ <li> <tt>-a</tt>&nbsp;: read <tt>/etc/fstab</tt> instead of other arguments </li>
+ <li> <tt>-t</tt> <em>fstype</em>&nbsp;: filesystem is of type <em>fstype</em>. Default: ext2. </li>
+ <li> <tt>-r</tt>&nbsp;: mount read-only </li>
+ <li> <tt>-w</tt>&nbsp;: mount read-write (default) </li>
+ <li> <tt>-o</tt> <em>option</em>&nbsp;: mount with option <em>option</em>.
+Currently recognized options: defaults, ro, rw, remount, sync, async,
+nodev, dev, noexec, exec, nosuid, suid, noatime, atime, nodiratime, diratime,
+bind, nobind, move, nomove. Unrecognized options are given directly to the kernel. </li>
+</ul>
+
+</body>
+</html>

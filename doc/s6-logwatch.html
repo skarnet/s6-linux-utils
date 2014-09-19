@@ -1,0 +1,72 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="Content-Language" content="en" />
+    <title>s6-linux-utils: the s6-logwatch program</title>
+    <meta name="Description" content="s6-linux-utils: the s6-logwatch program" />
+    <meta name="Keywords" content="s6-linux-utils linux utilities log s6-log logwatch" />
+    <!-- <link rel="stylesheet" type="text/css" href="http://skarnet.org/default.css" /> -->
+  </head>
+<body>
+
+<p>
+<a href="index.html">s6-linux-utils</a><br />
+<a href="http://skarnet.org/software/">Software</a><br />
+<a href="http://skarnet.org/">skarnet.org</a>
+</p>
+
+<h1> The <tt>s6-logwatch</tt> program </h1>
+
+<p>
+<tt>s6-logwatch</tt> watches the <tt>current</tt> file of a logdir, printing it
+in real time.
+</p>
+
+<h2> Interface </h2>
+
+<pre>
+     s6-logwatch [ -m <em>buflen</em> ] <em>logdir</em>
+</pre>
+
+<ul>
+ <li> s6-logwatch prints <em>logdir</em><tt>/current</tt> and watches
+the file. </li>
+ <li> <em>logdir</em> must be managed by a
+<a href="http://skarnet.org/software/s6/s6-log.html">s6-log</a> instance. </li>
+ <li> When new logs are appended to the <tt>current</tt> file, s6-logwatch prints
+them in real-time to stdout. </li>
+ <li> When a rotation happens, s6-logwatch notices, and keeps watching the
+new <tt>current</tt> file. </li>
+ <li> s6-logwatch runs forever until killed. </li>
+</ul>
+
+<h2> Options </h2>
+
+<ul>
+ <li> <tt>-m</tt>&nbsp;<em>buflen</em>&nbsp;: accumulate at most <em>buflen</em>
+bytes into the stdout buffer before flushing it. By default, <em>buflen</em> is
+4000. </li>
+</ul>
+
+<h2> Bugs </h2>
+
+<ul>
+ <li> s6-logwatch is not entirely reliable because there is an unavoidable
+race condition when a rotation occurs; it's a hack for humans to keep reading
+logs across rotations, not a tool to be used in safe programming. When the
+race condition is triggered, s6-logwatch will be unable to understand what
+state <em>logdir</em> is in and will exit 101 with an error message. </li>
+ <li> Specific support in the logger program would be needed to avoid this
+race condition; it would significantly bloat the logger program, so it has
+not been deemed useful. </li>
+</ul>
+
+<h2> Notes </h2>
+
+<ul>
+ <li> s6-logwatch is Linux-specific because it uses the
+<a href="http://inotify.aiken.cz/">inotify</a> interface. </li>
+</ul>
+
+</body>
+</html>
