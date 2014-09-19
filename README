@@ -1,5 +1,5 @@
 s6-linux-utils - tiny Linux-specific utilities
------------------------------------------------
+----------------------------------------------
 
 s6-linux-utils is a set of tiny Linux-specific utilities,
 often performing well-known tasks such as mount and swapon
