@@ -1,4 +1,4 @@
-BIN_TARGETS = \
+BIN_TARGETS := \
 s6-chroot \
 s6-devd \
 s6-freeramdisk \
@@ -15,8 +15,5 @@ s6-swapoff \
 s6-swapon \
 s6-umount \
 
-SBIN_TARGETS =
-LIBEXEC_TARGETS =
-
-SHARED_LIBS =
-STATIC_LIBS =
+SBIN_TARGETS :=
+LIBEXEC_TARGETS :=
