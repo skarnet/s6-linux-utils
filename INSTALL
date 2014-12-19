@@ -4,7 +4,7 @@ Build Instructions
 * Requirements
   ------------
 
-  - A POSIX-compliant C development environment
+  - A Linux-based system with a standard C development environment
   - GNU make version 4.0 or later
   - skalibs version 2.0.0.0 or later: http://skarnet.org/software/skalibs/
 
