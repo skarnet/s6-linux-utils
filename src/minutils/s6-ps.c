@@ -296,7 +296,7 @@ int main (int argc, char const *const *argv)
         strerr_diefu1sys(111, "avltreeb_insert") ;
 
       if (flagtree) s6ps_otree(p, n+1, &pidtree.info, orderedlist) ;
-      else avltreeb_iter(&pidtree, &fillo_notree, orderedlist) ;
+      else avltreeb_iter_nocancel(&pidtree, avltreeb_totalsize(&pidtree), &fillo_notree, orderedlist) ;
     }
 
 

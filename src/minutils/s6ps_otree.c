@@ -78,7 +78,7 @@ void s6ps_otree (pscan_t *p, unsigned int n, avltreen *pidtree, unsigned int *or
     unsigned int cpos[n] ;
     ptreeiter_t blah = { .childlist = childlist, .childindex = childindex, .ppindex = orderedlist, .cpos = cpos } ;
     for (i = 0 ; i < n ; i++) cpos[i] = 0 ;
-    avltreen_iter(pidtree, &fillchildlist, &blah) ;
+    avltreen_iter_nocancel(pidtree, avltreen_totalsize(pidtree), &fillchildlist, &blah) ;
   }
 
  /* If we have init, make it the last in the orphan list */
