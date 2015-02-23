@@ -3,7 +3,6 @@ s6-chroot \
 s6-devd \
 s6-freeramdisk \
 s6-halt \
-s6-hiercopy \
 s6-hostname \
 s6-logwatch \
 s6-mount \

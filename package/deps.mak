@@ -33,8 +33,6 @@ s6-freeramdisk: private EXTRA_LIBS :=
 s6-freeramdisk: src/minutils/s6-freeramdisk.o -lskarnet
 s6-halt: private EXTRA_LIBS :=
 s6-halt: src/minutils/s6-halt.o -lskarnet
-s6-hiercopy: private EXTRA_LIBS :=
-s6-hiercopy: src/minutils/s6-hiercopy.o -lskarnet
 s6-hostname: private EXTRA_LIBS :=
 s6-hostname: src/minutils/s6-hostname.o -lskarnet
 s6-logwatch: private EXTRA_LIBS :=
