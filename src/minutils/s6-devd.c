@@ -241,15 +241,8 @@ int main (int argc, char const *const *argv, char const *const *envp)
     }
     argc -= l.ind ; argv += l.ind ;
     if (!argc) strerr_dieusage(100, USAGE) ;
-    {
-      int fd = open_readb("/dev/null") ;
-      if (fd < 0) strerr_diefu2sys(111, "open /dev/null for ", "reading") ;
-      if (fd_move(0, fd) < 0) strerr_diefu2sys(111, "redirect std", "in") ;
-      fd = open_write("/dev/null") ;
-      if (fd < 0) strerr_diefu2sys(111, "open /dev/null for ", "writing") ;
-      if (ndelay_off(fd) < 0) strerr_diefu1sys(111, "ndelay_off /dev/null") ;
-      if (fd_move(1, fd) < 0) strerr_diefu2sys(111, "redirect std", "out") ;
-    }
+    close(0) ;
+    if (open_readb("/dev/null") < 0) strerr_diefu1sys(111, "open /dev/null for reading") ;
     x[1].fd = netlink_init(kbufsz) ;
     if (x[1].fd < 0) strerr_diefu1sys(111, "init netlink") ;
   }
