@@ -33,9 +33,10 @@ interface does.
  <li> s6-devd rewrites its command line into
 <tt><a href="s6-uevent-listener.html">s6-uevent-listener</a>
 <a href="s6-uevent-spawner.html">s6-uevent-spawner</a> <em>prog...</em></tt>,
-dispatching its options to the appropriate program; then it execs into
-this command line. </li>
- <li> The <a href="s6-uevent-listener.html">s6-uevent-listener</a>
+dispatching its options to the appropriate programs; then it execs into
+this new command line. It does nothing else: it's just a wrapper. </li>
+ <li> The first executed program,
+<a href="s6-uevent-listener.html">s6-uevent-listener</a>,
 will listen to the netlink and pass the events sequentially to
 <a href="s6-uevent-spawner.html">s6-uevent-spawner</a>, which will
 spawn a <em>prog...</em> helper for every event. </li>

@@ -70,7 +70,7 @@ alive after <em>k</em> more milliseconds, s6-uevent-spawner yells and exits 99. 
 
 <ul>
  <li> The <em>prog...</em> helper should be very short-lived,
-even if you are not using the <tt>-t</tt> option to s6-devd. Since helpers are
+even if you are not using the <tt>-t</tt> option. Since helpers are
 spawned sequentially, slow helpers can make events queue up and fill up
 buffers. </li>
 </ul>

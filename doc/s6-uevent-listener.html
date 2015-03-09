@@ -35,9 +35,9 @@ helper program's standard input, using a simple format.
 <em>prog</em>' stdin. </li>
  <li> s6-uevent-listener binds to the netlink interface and listens for
 hotplug events, as the <em>udev</em> program does. </li>
- <li> It tranmits event information to <em>prog</em> via the pipe. </li>
- <li> s6-uevent-listener, as well as <em>prog</em>, are long-lived programs.
-When it receives a SIGTERM, s6-uevent-listener stops listening; it will
+ <li> It transmits event information to <em>prog</em> via the pipe. </li>
+ <li> s6-uevent-listener, like <em>prog</em>, is a long-lived program.
+When it receives a SIGTERM, it stops listening; it will
 exit as soon as it has flushed its event queue to <em>prog</em>. </li>
 </ul>
 
@@ -50,7 +50,8 @@ print warnings every time the netlink interface sends something
 unexpected. </li>
  <li> <tt>-b</tt>&nbsp;<em>kbufsz</em>&nbsp;: try and reserve a kernel buffer of
 <em>kbufsz</em> bytes for the netlink queue. Too large a buffer wastes kernel memory;
-too small a buffer risks losing events. The default is 65536. </li>
+too small a buffer risks losing events. The default is 65536 (which is on
+the large side). </li>
 </ul>
 
 <h2> Protocol </h2>
