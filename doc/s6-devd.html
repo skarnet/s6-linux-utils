@@ -4,7 +4,7 @@
     <meta http-equiv="Content-Language" content="en" />
     <title>s6-linux-utils: the s6-devd program</title>
     <meta name="Description" content="s6-linux-utils: the s6-devd program" />
-    <meta name="Keywords" content="s6 linux administration root utilities devd mdev udev" />
+    <meta name="Keywords" content="s6 linux administration root utilities devd mdev udev s6-uevent-listener s6-uevent-spawner" />
     <!-- <link rel="stylesheet" type="text/css" href="http://skarnet.org/default.css" /> -->
   </head>
 <body>
@@ -26,20 +26,19 @@ interface does.
 <h2> Interface </h2>
 
 <pre>
-     s6-devd [ -q | -v ] [ -b kbufsz ] [ -t l:t:k ] <em>prog...</em>
+     s6-devd [ -q | -v ] [ -b <em>kbufsz</em> ] [ -l <em>linevar</em> ] [ -t l:t:k ] <em>prog...</em>
 </pre>
 
 <ul>
- <li> s6-devd binds to the netlink interface and listens for
-hotplug events, as the <em>udev</em> program does. </li>
- <li> For every event it receives, it spawns <em>prog...</em> with
-the event variables added to the environment, just as if <em>prog...</em>
-had been registered in <tt>/proc/sys/kernel/hotplug</tt>. </li>
- <li> However, unlike the kernel, s6-devd spawns the <em>prog...</em> helpers
-sequentially: it waits for an instance to finish before spawning another one. </li>
- <li> s6-devd is a long-lived program; it exits 0 when it receives a
-SIGTERM. If a helper program is alive at that time, s6-devd waits for it to die
-before exiting. </li>
+ <li> s6-devd rewrites its command line into
+<tt><a href="s6-uevent-listener.html">s6-uevent-listener</a>
+<a href="s6-uevent-spawner.html">s6-uevent-spawner</a> <em>prog...</em></tt>,
+dispatching its options to the appropriate program; then it execs into
+this command line. </li>
+ <li> The <a href="s6-uevent-listener.html">s6-uevent-listener</a>
+will listen to the netlink and pass the events sequentially to
+<a href="s6-uevent-spawner.html">s6-uevent-spawner</a>, which will
+spawn a <em>prog...</em> helper for every event. </li>
 </ul>
 
 <h2> Options </h2>
@@ -47,9 +46,13 @@ before exiting. </li>
 <ul>
  <li> <tt>-q</tt>&nbsp;: be more quiet. </li>
  <li> <tt>-v</tt>&nbsp;: be more verbose. </li>
- <li> <tt>-b</tt> <em>kbufsz</em>&nbsp;: try and reserve a kernel buffer of
+ <li> <tt>-b</tt>&nbsp;<em>kbufsz</em>&nbsp;: try and reserve a kernel buffer of
 <em>kbufsz</em> bytes for the netlink queue. Too large a buffer wastes kernel memory;
 too small a buffer risks losing events. The default is 65536. </li>
+ <li> <tt>-l</tt>&nbsp;<em>linevar</em>&nbsp;: the short description of the
+event, given by the kernel as the first string in the netlink message,
+will be made available to <em>prog</em> under the environment variable
+named <em>linevar</em>. </li>
  <li> <tt>-t</tt> <em>l:t:k</em>&nbsp;: If <em>l</em>, <em>t</em> or <em>k</em> is
 specified, they specify timeouts; by default, they are infinite.
 If <em>prog...</em> is still alive after <em>l</em> milliseconds, s6-devd sends
@@ -62,18 +65,13 @@ alive after <em>k</em> more milliseconds, s6-devd yells and exits 99. </li>
 
 <ul>
  <li> s6-devd is a daemon; it should be run under a proper supervision system such
-as <a href="http://skarnet.org/software/s6/">s6</a>. (That is why it does not
-fork and logs to stderr.) </li>
+as <a href="http://skarnet.org/software/s6/">s6</a>. The real long-lived
+process is named <a href="s6-uevent-listener.html">s6-uevent-listener</a>;
+ir runs with the same pid as s6-devd. </li>
  <li> The <em>prog...</em> helper, on the other hand, should be very short-lived,
 even if you are not using the <tt>-t</tt> option to s6-devd. Since helpers are
-spawned sequentially, slow helpers can make events queue up and fill the netlink
-kernel buffer. </li>
- <li> If you are using <a href="http://busybox.net/">busybox</a> and want a
-minimal udev-style dynamic <tt>/dev</tt>
-handling, <tt>/sbin/mdev</tt> is a suitable <em>prog...</em> helper. </li>
- <li> The point of s6-devd is that it runs the helpers sequentially, so it solves
-the race condition that appears when helpers are run via the hotplug interface.
-When s6-devd is used, <tt>/proc/sys/kernel/hotplug</tt> should be empty. </li>
+spawned sequentially, slow helpers can make events queue up and fill buffers
+along the way. </li>
 </ul>
 
 </body>
