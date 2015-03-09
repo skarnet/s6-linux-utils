@@ -36,7 +36,7 @@ hotplug events, as the <em>udev</em> program does. </li>
 the event variables added to the environment, just as if <em>prog...</em>
 had been registered in <tt>/proc/sys/kernel/hotplug</tt>. </li>
  <li> However, unlike the kernel, s6-devd spawns the <em>prog...</em> helpers
-sequentially: it waits for an instance to finish before spawning another one. </li>
+sequentially: it waits for an instance to finish before spawning another one. </li>
  <li> s6-devd is a long-lived program; it exits 0 when it receives a
 SIGTERM. If a helper program is alive at that time, s6-devd waits for it to die
 before exiting. </li>
@@ -68,7 +68,7 @@ fork and logs to stderr.) </li>
 even if you are not using the <tt>-t</tt> option to s6-devd. Since helpers are
 spawned sequentially, slow helpers can make events queue up and fill the netlink
 kernel buffer. </li>
- <li> If you are using <a href="http://busybox.net/">busybox</a> and want a
+ <li> If you are using <a href="http://busybox.net/">busybox</a> and want a
 minimal udev-style dynamic <tt>/dev</tt>
 handling, <tt>/sbin/mdev</tt> is a suitable <em>prog...</em> helper. </li>
  <li> The point of s6-devd is that it runs the helpers sequentially, so it solves

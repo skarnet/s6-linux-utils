@@ -3,7 +3,7 @@
 #
 
 src/minutils/s6-chroot.o src/minutils/s6-chroot.lo: src/minutils/s6-chroot.c
-src/minutils/s6-devd.o src/minutils/s6-devd.lo: src/minutils/s6-devd.c
+src/minutils/s6-devd.o src/minutils/s6-devd.lo: src/minutils/s6-devd.c src/include/s6-linux-utils/config.h
 src/minutils/s6-freeramdisk.o src/minutils/s6-freeramdisk.lo: src/minutils/s6-freeramdisk.c
 src/minutils/s6-halt.o src/minutils/s6-halt.lo: src/minutils/s6-halt.c
 src/minutils/s6-hiercopy.o src/minutils/s6-hiercopy.lo: src/minutils/s6-hiercopy.c
@@ -16,6 +16,8 @@ src/minutils/s6-ps.o src/minutils/s6-ps.lo: src/minutils/s6-ps.c src/minutils/s6
 src/minutils/s6-reboot.o src/minutils/s6-reboot.lo: src/minutils/s6-reboot.c
 src/minutils/s6-swapoff.o src/minutils/s6-swapoff.lo: src/minutils/s6-swapoff.c
 src/minutils/s6-swapon.o src/minutils/s6-swapon.lo: src/minutils/s6-swapon.c
+src/minutils/s6-uevent-listener.o src/minutils/s6-uevent-listener.lo: src/minutils/s6-uevent-listener.c
+src/minutils/s6-uevent-spawner.o src/minutils/s6-uevent-spawner.lo: src/minutils/s6-uevent-spawner.c
 src/minutils/s6-umount.o src/minutils/s6-umount.lo: src/minutils/s6-umount.c
 src/minutils/s6ps_grcache.o src/minutils/s6ps_grcache.lo: src/minutils/s6ps_grcache.c src/minutils/s6-ps.h
 src/minutils/s6ps_otree.o src/minutils/s6ps_otree.lo: src/minutils/s6ps_otree.c src/minutils/s6-ps.h
@@ -51,5 +53,9 @@ s6-swapoff: private EXTRA_LIBS :=
 s6-swapoff: src/minutils/s6-swapoff.o -lskarnet
 s6-swapon: private EXTRA_LIBS :=
 s6-swapon: src/minutils/s6-swapon.o -lskarnet
+s6-uevent-listener: private EXTRA_LIBS :=
+s6-uevent-listener: src/minutils/s6-uevent-listener.o -lskarnet
+s6-uevent-spawner: private EXTRA_LIBS :=
+s6-uevent-spawner: src/minutils/s6-uevent-spawner.o -lskarnet
 s6-umount: private EXTRA_LIBS :=
 s6-umount: src/minutils/s6-umount.o -lskarnet

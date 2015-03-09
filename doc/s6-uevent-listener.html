@@ -1,0 +1,99 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="Content-Language" content="en" />
+    <title>s6-linux-utils: the s6-uevent-listener program</title>
+    <meta name="Description" content="s6-linux-utils: the s6-uevent-listener program" />
+    <meta name="Keywords" content="s6 linux administration root utilities devd mdev udev s6-uevent-listener uevent" />
+    <!-- <link rel="stylesheet" type="text/css" href="http://skarnet.org/default.css" /> -->
+  </head>
+<body>
+
+<p>
+<a href="index.html">s6-linux-utils</a><br />
+<a href="http://skarnet.org/software/">Software</a><br />
+<a href="http://skarnet.org/">skarnet.org</a>
+</p>
+
+<h1> The <tt>s6-uevent-listener</tt> program </h1>
+
+<p>
+<tt>s6-uevent-listener</tt> spawns a long-lived helper program.
+It then listens to the netlink interface for uevents (also called
+"hotplug" or "udev" events), and passes those events to the
+helper program's standard input, using a simple format.
+</p>
+
+<h2> Interface </h2>
+
+<pre>
+     s6-uevent-listener [ -v <em>verbosity</em> ] [ -b kbufsz ] <em>prog...</em>
+</pre>
+
+<ul>
+ <li> s6-uevent-listener spawns <em>prog...</em> with a pipe writing to
+<em>prog</em>' stdin. </li>
+ <li> s6-uevent-listener binds to the netlink interface and listens for
+hotplug events, as the <em>udev</em> program does. </li>
+ <li> It tranmits event information to <em>prog</em> via the pipe. </li>
+ <li> s6-uevent-listener, as well as <em>prog</em>, are long-lived programs.
+When it receives a SIGTERM, s6-uevent-listener stops listening; it will
+exit as soon as it has flushed its event queue to <em>prog</em>. </li>
+</ul>
+
+<h2> Options </h2>
+
+<ul>
+ <li> <tt>-v</tt>&nbsp;<em>verbosity</em>&nbsp;: be more or less verbose.
+Default verbosity is 1. 0 will only print fatal error messages, 3 will
+print warnings every time the netlink interface sends something
+unexpected. </li>
+ <li> <tt>-b</tt>&nbsp;<em>kbufsz</em>&nbsp;: try and reserve a kernel buffer of
+<em>kbufsz</em> bytes for the netlink queue. Too large a buffer wastes kernel memory;
+too small a buffer risks losing events. The default is 65536. </li>
+</ul>
+
+<h2> Protocol </h2>
+
+<ul>
+ <li> <em>prog</em> should read a series of events on its stdin, and exit
+on EOF. </li>
+ <li> An event is a series of null-terminated strings as they are sent by
+the kernel to the netlink; s6-uevent-listener adds a final empty string
+(i.e. an additional null character) to mark the end of the series. </li>
+ <li> The first string is a short description of the event; it normally
+contains the string "@/". Other strings after the first are of the form
+"VARIABLE=value", and describe the environment which a hotplug helper
+for the event (registered in <tt>/proc/sys/kernel/hotplug</tt>) would be
+spawned with. </li>
+ <li> Example (newlines added for clarity): <pre>
+add@/class/input/input9/mouse2\0
+ACTION=add\0
+DEVPATH=/class/input/input9/mouse2\0
+SUBSYSTEM=input\0
+SEQNUM=106\0
+PHYSDEVPATH=/devices/pci0000:00/0000:00:1d.1/usb2/2­2/2­2:1.0
+PHYSDEVBUS=usb\0
+PHYSDEVDRIVER=usbhid\0
+MAJOR=13\0
+MINOR=34\0
+\0 </pre> </li>
+</ul>
+
+<h2> Notes </h2>
+
+<ul>
+ <li> s6-uevent-listener is a daemon; it should be run under a proper supervision system such
+as <a href="http://skarnet.org/software/s6/">s6</a>. </li>
+<li> If you are running s6-uevent-listener, <em>prog...</em> should be the
+only program handling uevents, which means that
+<tt>/proc/sys/kernel/hotplug</tt> should be empty. </li>
+ <li> If you want the serialization benefit of the netlink, but still
+want to spawn a program such as <a href="http://busybox.net/">busybox</a>'s
+or <a href="http://landley.net/toybox/">toybox</a>'s <tt>mdev</tt>, use
+<tt><a href="s6-uevent-spawner.html">s6-uevent-spawner</a> mdev</tt> as
+s6-uevent-listener's <em>prog</em>. </li>
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,79 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="Content-Language" content="en" />
+    <title>s6-linux-utils: the s6-uevent-spawner program</title>
+    <meta name="Description" content="s6-linux-utils: the s6-uevent-spawner program" />
+    <meta name="Keywords" content="s6 linux administration root utilities devd mdev udev hotplug" />
+    <!-- <link rel="stylesheet" type="text/css" href="http://skarnet.org/default.css" /> -->
+  </head>
+<body>
+
+<p>
+<a href="index.html">s6-linux-utils</a><br />
+<a href="http://skarnet.org/software/">Software</a><br />
+<a href="http://skarnet.org/">skarnet.org</a>
+</p>
+
+<h1> The <tt>s6-uevent-spawner</tt> program </h1>
+
+<p>
+<tt>s6-uevent-spawner</tt> listens to its standard input for
+netlink-style events, and launches a helper program for every event,
+similarly to what the hotplug interface does.
+</p>
+
+<p>
+ It is meant to be used together with
+<a href="s6-uevent-listener.html">s6-uevent-listener</a>.
+</p>
+
+<h2> Interface </h2>
+
+<pre>
+     s6-uevent-spawner [ -v <em>verbosity</em> ] [ -l <em>linevar</em> ] [ -t <em>l</em>:<em>t</em>:<em>k</em> ] <em>prog...</em>
+</pre>
+
+<ul>
+ <li> s6-uevent-spawner listens to its stdin for a series of strings
+representing kernel uevents, as formatted by
+<a href="s6-uevent-listener.html">s6-uevent-listener</a>. </li>
+ <li> For every event it reads, it spawns <em>prog...</em> with
+the event variables added to the environment, just as if <em>prog...</em>
+had been registered in <tt>/proc/sys/kernel/hotplug</tt>. However,
+it reads the events sequentially, and waits for a <em>prog</em> instance
+to finish before spawning another one. </li>
+ <li> When s6-uevent-spawner receives EOF: if an instance of
+<em>prog</em> is alive, it first waits for it to die. Then it exits
+0. </li>
+</ul>
+
+<h2> Options </h2>
+
+<ul>
+ <li> <tt>-v</tt>&nbsp;<em>verbosity</em>&nbsp;: be more or less verbose.
+Default verbosity is 1. 0 only prints fatal error messages. 3 is too much. </li>
+ <li> <tt>-l</tt> <em>linevar</em>&nbsp;: make the event description
+(i.e. the first string in the netlink message announcing the event)
+available in <em>prog</em> under the environment variable <em>linevar</em>.
+By default, this first string is ignored - it is not needed, all the
+event information is already in the other variables. </li>
+ <li> <tt>-t</tt> <em>l:t:k</em>&nbsp;: If <em>l</em>, <em>t</em> or <em>k</em> is
+specified, they specify timeouts; by default, they are infinite.
+If <em>prog...</em> is still alive after <em>l</em> milliseconds, s6-devd sends
+it a SIGTERM. Then, if <em>prog...</em> is still alive after <em>t</em> more
+milliseconds, s6-devd sends it a SIGKILL. Then, if <em>prog...</em> is still
+alive after <em>k</em> more milliseconds, s6-uevent-spawner yells and exits 99. </li>
+</ul>
+
+<h2> Notes </h2>
+
+<ul>
+ <li> The <em>prog...</em> helper should be very short-lived,
+even if you are not using the <tt>-t</tt> option to s6-devd. Since helpers are
+spawned sequentially, slow helpers can make events queue up and fill up
+buffers. </li>
+</ul>
+
+</body>
+</html>
