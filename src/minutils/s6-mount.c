@@ -10,7 +10,7 @@
 #include <skalibs/djbunix.h>
 #include "mount-constants.h"
 
-#define USAGE "s6-mount -a [ -z fstab ] | s6-mount [ -t type ] [ -o option[,option...] ]... device mountpoint"
+#define USAGE "s6-mount -a [ -z fstab ] | s6-mount [ -n ] [ -t type ] [ -o option[,option...] ]... device mountpoint"
 #define BUFSIZE 4096
 
 #define SWITCH(opt) do
@@ -93,15 +93,17 @@ int main (int argc, char const *const *argv)
   char const *fstab = "/etc/fstab" ;
   PROG = "s6-mount" ;
   {
+    int doall = 0 ;
     subgetopt_t l = SUBGETOPT_ZERO ;
     for (;;)
     {
-      register int opt = subgetopt_r(argc, argv, "z:arwt:o:", &l) ;
+      register int opt = subgetopt_r(argc, argv, "nz:arwt:o:", &l) ;
       if (opt == -1) break ;
       switch (opt)
       {
+        case 'n' : break ;
         case 'z' : fstab = l.arg ; break ;
-        case 'a' : return mountall(fstab) ;
+        case 'a' : doall = 1 ; break ;
         case 't' : fstype = l.arg ; break ;
         case 'w' : scanopt(&data, &flags, "rw") ; break ;
         case 'r' : scanopt(&data, &flags, "ro") ; break ;
@@ -110,6 +112,7 @@ int main (int argc, char const *const *argv)
       }
     }
     argc -= l.ind ; argv += l.ind ;
+    if (doall) return mountall(fstab) ;
   }
   if (!argc)
   {
