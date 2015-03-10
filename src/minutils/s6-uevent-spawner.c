@@ -29,7 +29,7 @@
 #define dienomem() strerr_diefu1sys(111, "build string") ;
 
 static unsigned int cont = 1, state = 0, verbosity = 1 ;
-static pid_t pid ;
+static pid_t pid = 0 ;
 static tain_t lifetto = TAIN_INFINITE_RELATIVE,
               termtto = TAIN_INFINITE_RELATIVE,
               killtto = TAIN_INFINITE_RELATIVE,
@@ -48,6 +48,7 @@ static inline void on_event (char const *const *argv, char const *const *envp, c
   posix_spawn_file_actions_t actions ;
   unsigned int envlen = env_len(envp) ;
   unsigned int n = envlen + 1 + byte_count(s, len, '\0') ;
+  pid_t mypid ;
   int e ;
   char const *v[n] ;
   if (!env_merge(v, n, envp, envlen, s, len))
@@ -68,11 +69,12 @@ static inline void on_event (char const *const *argv, char const *const *envp, c
   if (e) { errno = e ; strerr_diefu1sys(111, "posix_spawn_file_actions_init") ; }
   e = posix_spawn_file_actions_addopen(&actions, 0, "/dev/null", O_RDONLY, S_IRUSR) ;
   if (e) { errno = e ; strerr_diefu1sys(111, "posix_spawn_file_actions_addopen") ; }
-  e = posix_spawnp(&pid, argv[0], &actions, &attr, (char *const *)argv, (char * const *)v) ;
+  e = posix_spawnp(&mypid, argv[0], &actions, &attr, (char *const *)argv, (char * const *)v) ;
   if (e) { errno = e ; strerr_diefu2sys(111, "spawn ", argv[0]) ; }
   posix_spawn_file_actions_destroy(&actions) ;
   posix_spawnattr_destroy(&attr) ;
   state = 1 ;
+  pid = mypid ;
   tain_add_g(&deadline, &lifetto) ;
 }
 
@@ -130,7 +132,7 @@ static inline void handle_signals (void)
 
 static inline void handle_stdin (stralloc *sa, char const *linevar, char const *const *argv, char const *const *envp)
 {
-  for (;;)
+  while (!pid)
   {
     unsigned int start ;
     register int r ;
@@ -150,7 +152,7 @@ static inline void handle_stdin (stralloc *sa, char const *linevar, char const *
       start = linevar ? 0 : str_len(sa->s) + 1 ;
       if (start >= sa->len)
       {
-        if (verbosity) strerr_warnw1x("empty event!") ;
+        if (verbosity) strerr_warnw1x("read an empty event!") ;
       }
       else on_event(argv, envp, sa->s + start, sa->len - 1 - start) ;
       sa->len = 0 ;
@@ -192,7 +194,7 @@ int main (int argc, char const *const *argv, char const *const *envp)
       if (opt == -1) break ;
       switch (opt)
       {
-        case 'l' : linevar = optarg ; break ;
+        case 'l' : linevar = l.arg ; break ;
         case 'v' : if (!uint0_scan(l.arg, &verbosity)) dieusage() ; break ;
         case 't' : if (!make_ttos(l.arg)) dieusage() ; break ;
         default : dieusage() ;
@@ -224,7 +226,8 @@ int main (int argc, char const *const *argv, char const *const *envp)
     {
       if (x[0].revents & IOPAUSE_EXCEPT)
         strerr_diefu1x(111, "iopause: trouble with selfpipe") ;
-      if (x[0].revents & IOPAUSE_READ) handle_signals() ;
+      if (x[0].revents & IOPAUSE_READ)
+        handle_signals() ;
       else if (!pid && cont && (x[1].revents & IOPAUSE_READ))
         handle_stdin(&sa, linevar, argv, envp) ;
     }
