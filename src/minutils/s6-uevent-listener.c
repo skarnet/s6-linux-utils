@@ -10,15 +10,14 @@
 #include <signal.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
-#include <asm/types.h>
 #include <linux/netlink.h>
-#include <skalibs/allreadwrite.h>
-#include <skalibs/bytestr.h>
 #include <skalibs/uint.h>
+#include <skalibs/allreadwrite.h>
+#include <skalibs/siovec.h>
+#include <skalibs/buffer.h>
 #include <skalibs/sgetopt.h>
 #include <skalibs/strerr2.h>
 #include <skalibs/iopause.h>
-#include <skalibs/bufalloc.h>
 #include <skalibs/djbunix.h>
 #include <skalibs/sig.h>
 #include <skalibs/selfpipe.h>
@@ -27,6 +26,11 @@
 #define dieusage() strerr_dieusage(100, USAGE)
 #define dienomem() strerr_diefu1sys(111, "build string") ;
 
+#define MAXNLSIZE 4096
+#define BUFSIZE 8191
+
+static char buf1[BUFSIZE + 1] ;
+static buffer b1 = BUFFER_INIT(&fd_writesv, 1, buf1, BUFSIZE + 1) ;
 static unsigned int cont = 1, verbosity = 1 ;
 static pid_t pid ;
 
@@ -40,7 +44,7 @@ static inline int fd_recvmsg (int fd, struct msghdr *hdr)
 
 static inline int netlink_init_stdin (unsigned int kbufsz)
 {
-  struct sockaddr_nl nl = { .nl_family = AF_NETLINK, .nl_pad = 0, .nl_groups = 0, .nl_pid = 0 } ;
+  struct sockaddr_nl nl = { .nl_family = AF_NETLINK, .nl_pad = 0, .nl_groups = 1, .nl_pid = 0 } ;
   close(0) ;
   return socket_internal(AF_NETLINK, SOCK_DGRAM, NETLINK_KOBJECT_UEVENT, DJBUNIX_FLAG_NB|DJBUNIX_FLAG_COE) == 0
    && bind(0, (struct sockaddr *)&nl, sizeof(struct sockaddr_nl)) == 0
@@ -86,34 +90,31 @@ static inline void handle_signals (void)
   }
 }
 
-static void doit (char const *s, unsigned int len)
+static inline void handle_stdout (void)
 {
-  if (!bufalloc_put(bufalloc_1, s, len)) dienomem() ;
-}
-
-static void terminate (void)
-{
-  if (!bufalloc_put(bufalloc_1, "", 1)) dienomem() ;
+  if (!buffer_flush(&b1)) strerr_diefu1sys(111, "flush stdout") ;
 }
 
 static inline void handle_netlink (void)
 {
-  char buf[8192] ;
-  static int inmulti = 0 ;
   struct sockaddr_nl nl;
-  struct iovec iov = { .iov_base = &buf, .iov_len = sizeof(buf) } ;
+  struct iovec iov[2] ;
   struct msghdr msg =
   {
     .msg_name = &nl,
     .msg_namelen = sizeof(struct sockaddr_nl),
-    .msg_iov = &iov,
-    .msg_iovlen = 1,
+    .msg_iov = iov,
+    .msg_iovlen = 2,
     .msg_control = 0,
     .msg_controllen = 0,
     .msg_flags = 0
   } ;
-  struct nlmsghdr *nlh = (struct nlmsghdr *)buf ;
-  int r = sanitize_read(fd_recvmsg(0, &msg)) ;
+  siovec_t v[2] ;
+  register int r ;
+  buffer_rpeek(&b1, v) ;
+  siovec_trunc(v, 2, siovec_len(v, 2) - 1) ;
+  iovec_from_siovec(iov, v, 2) ;
+  r = sanitize_read(fd_recvmsg(0, &msg)) ;
   if (r < 0)
   {
     if (errno == EPIPE)
@@ -136,44 +137,16 @@ static inline void handle_netlink (void)
       fmt[uint_fmt(fmt, nl.nl_pid)] = 0 ;
       strerr_warnw3x("netlink message", " from userspace process ", fmt) ;
     }
+    buffer_unput(&b1, r) ;
     return ;
   }
-
-  for (; NLMSG_OK(nlh, r) ; nlh = NLMSG_NEXT(nlh, r))
-    switch (nlh->nlmsg_type)
-    {
-      case NLMSG_NOOP : break ;
-      case NLMSG_ERROR :
-        if (verbosity >= 3)
-          strerr_warnw2x("spurious NLMSG_ERROR ", "netlink message") ;
-        break ;
-      case NLMSG_DONE :
-        if (inmulti)
-        {
-          inmulti = 0 ;
-          terminate() ;
-        }
-        else if (verbosity >= 3)
-          strerr_warnw2x("spurious NLMSG_DONE ", "netlink message") ;
-        break ;
-      default :
-        if (nlh->nlmsg_flags & NLM_F_MULTI) inmulti = 1 ;
-        else if (inmulti)
-        {
-          inmulti = 0 ;
-          terminate() ;
-          if (verbosity >= 3)
-            strerr_warnw2x("unterminated multipart ", "netlink message") ;
-        }
-        doit(NLMSG_DATA(nlh), (unsigned int)NLMSG_PAYLOAD(nlh, r)) ;
-        if (!inmulti) terminate() ;
-        break ;
-    }
+  buffer_putnoflush(&b1, "", 1) ;
 }
+
 
 int main (int argc, char const *const *argv, char const *const *envp)
 {
-  iopause_fd x[3] = { { .events = IOPAUSE_READ }, { .fd = 1 }, { .fd = 0, .events = IOPAUSE_READ } } ;
+  iopause_fd x[3] = { { .events = IOPAUSE_READ }, { .fd = 1 }, { .fd = 0 } } ;
   PROG = "s6-uevent-listener" ;
   {
     unsigned int kbufsz = 65536 ;
@@ -210,23 +183,27 @@ int main (int argc, char const *const *argv, char const *const *envp)
     pid = child_spawn1_pipe(argv[0], argv, envp, &fd, 0) ;
     if (!pid) strerr_diefu2sys(111, "spawn ", argv[0]) ;
     if (fd_move(1, fd) < 0) strerr_diefu1sys(111, "move pipe to stdout") ;
+    if (ndelay_on(1) < 0) strerr_diefu1sys(111, "make stdout nonblocking") ;
   }
 
   if (verbosity >= 2) strerr_warni1x("starting") ;
 
-  while (cont || bufalloc_len(bufalloc_1))
+  while (cont || buffer_len(buffer_1))
   {
     register int r ;
-    x[1].events = bufalloc_len(bufalloc_1) ? IOPAUSE_WRITE : 0 ;
+    x[1].events = buffer_len(&b1) ? IOPAUSE_WRITE : 0 ;
+    x[2].events = buffer_available(&b1) >= MAXNLSIZE + 1 ? IOPAUSE_READ : 0 ;
     r = iopause(x, 2 + cont, 0, 0) ;
     if (r < 0) strerr_diefu1sys(111, "iopause") ;
     if (!r) continue ;
     if (x[0].revents & IOPAUSE_EXCEPT)
       strerr_diefu1x(111, "iopause: trouble with selfpipe") ;
-    if (x[0].revents & IOPAUSE_READ) handle_signals() ;
+    if (x[0].revents & IOPAUSE_READ)
+      handle_signals() ;
     if (x[1].revents & IOPAUSE_WRITE)
-      if (!bufalloc_flush(bufalloc_1)) strerr_diefu1sys(111, "flush stdout") ;
-    if (cont && x[2].revents & IOPAUSE_READ) handle_netlink() ;
+      handle_stdout() ;
+    if (cont && x[2].events & IOPAUSE_READ && x[2].revents & IOPAUSE_READ)
+      handle_netlink() ;
   }
   if (verbosity >= 2) strerr_warni1x("exiting") ;
   return 0 ;
