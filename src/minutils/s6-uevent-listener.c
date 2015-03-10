@@ -111,7 +111,7 @@ static inline void handle_netlink (void)
   } ;
   siovec_t v[2] ;
   register int r ;
-  buffer_rpeek(&b1, v) ;
+  buffer_wpeek(&b1, v) ;
   siovec_trunc(v, 2, siovec_len(v, 2) - 1) ;
   iovec_from_siovec(iov, v, 2) ;
   r = sanitize_read(fd_recvmsg(0, &msg)) ;
@@ -137,9 +137,9 @@ static inline void handle_netlink (void)
       fmt[uint_fmt(fmt, nl.nl_pid)] = 0 ;
       strerr_warnw3x("netlink message", " from userspace process ", fmt) ;
     }
-    buffer_unput(&b1, r) ;
     return ;
   }
+  buffer_wseek(&b1, r) ;
   buffer_putnoflush(&b1, "", 1) ;
 }
 
