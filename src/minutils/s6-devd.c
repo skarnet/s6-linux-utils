@@ -63,7 +63,7 @@ int main (int argc, char const *const *argv, char const *const *envp)
     }
     if (kbufsz != 65536)
     {
-      newargv[m++] = "-k" ;
+      newargv[m++] = "-b" ;
       newargv[m++] = fmt + pos ;
       pos += uint_fmt(fmt + pos, kbufsz) ;
       fmt[pos++] = 0 ;
