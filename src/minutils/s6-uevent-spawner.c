@@ -228,7 +228,7 @@ int main (int argc, char const *const *argv, char const *const *envp)
         strerr_diefu1x(111, "iopause: trouble with selfpipe") ;
       if (x[0].revents & IOPAUSE_READ)
         handle_signals() ;
-      else if (!pid && cont && (x[1].revents & IOPAUSE_READ))
+      if (cont && x[1].revents & IOPAUSE_READ || buffer_len(buffer_0))
         handle_stdin(&sa, linevar, argv, envp) ;
     }
   }
