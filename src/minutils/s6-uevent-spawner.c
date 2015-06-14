@@ -206,6 +206,7 @@ int main (int argc, char const *const *argv, char const *const *envp)
   if (linevar && linevar[str_chr(linevar, '=')])
     strerr_dief2x(100, "invalid variable: ", linevar) ;
 
+  if (ndelay_on(0) < 0) strerr_diefu1sys(111, "set stdin nonblocking") ;
   x[0].fd = selfpipe_init() ;
   if (x[0].fd == -1) strerr_diefu1sys(111, "init selfpipe") ;
   if (sig_ignore(SIGPIPE) < 0) strerr_diefu1sys(111, "ignore SIGPIPE") ;
@@ -219,7 +220,10 @@ int main (int argc, char const *const *argv, char const *const *envp)
 
   while (cont || pid)
   {
-    register int r = iopause_g(x, 1 + (!pid && cont), &deadline) ;
+    register int r ;
+    if (buffer_len(buffer_0))
+      handle_stdin(&sa, linevar, argv, envp) ;
+    r = iopause_g(x, 1 + (!pid && cont), &deadline) ;
     if (r < 0) strerr_diefu1sys(111, "iopause") ;
     else if (!r) handle_timeout() ;
     else
@@ -228,7 +232,7 @@ int main (int argc, char const *const *argv, char const *const *envp)
         strerr_diefu1x(111, "iopause: trouble with selfpipe") ;
       if (x[0].revents & IOPAUSE_READ)
         handle_signals() ;
-      if (cont && x[1].revents & IOPAUSE_READ || buffer_len(buffer_0))
+      else if (cont && !pid && x[1].revents & IOPAUSE_READ)
         handle_stdin(&sa, linevar, argv, envp) ;
     }
   }
