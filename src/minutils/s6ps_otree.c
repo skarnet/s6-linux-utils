@@ -82,7 +82,7 @@ void s6ps_otree (pscan_t *p, unsigned int n, avltreen *pidtree, unsigned int *or
   }
 
  /* If we have init, make it the last in the orphan list */
-  if (p[childlist[childindex[n-1]+1]].pid == 1)
+  if (n > 1 && p[childlist[childindex[n-1]+1]].pid == 1)
   {
     unsigned int pos1 = childlist[childindex[n-1] + 1] ;
     for (i = 2 ; i < nchild[n-1] ; i++)
