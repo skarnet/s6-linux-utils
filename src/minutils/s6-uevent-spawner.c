@@ -106,7 +106,7 @@ static inline void handle_signals (void)
 {
   for (;;)
   {
-    char c = selfpipe_read() ;
+    int c = selfpipe_read() ;
     switch (c)
     {
       case -1 : strerr_diefu1sys(111, "selfpipe_read") ;
