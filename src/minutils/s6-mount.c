@@ -1,5 +1,6 @@
 /* ISC license. */
 
+#include <errno.h>
 #include <sys/mount.h>
 #include <mntent.h>
 #include <stdio.h>
@@ -124,6 +125,6 @@ int main (int argc, char const *const *argv)
   else if (argc == 1) strerr_dieusage(100, USAGE) ;
   else if (!stralloc_0(&data)) strerr_diefu1sys(111, "build data string") ;  
   else if (mount(argv[0], argv[1], fstype, flags, data.s) == -1)
-    strerr_diefu4sys(111, "mount ", argv[0], " on ", argv[1]) ;
+    strerr_diefu4sys(errno == EBUSY ? 1 : 111, "mount ", argv[0], " on ", argv[1]) ;
   return 0 ;
 }
