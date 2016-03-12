@@ -16,7 +16,7 @@
 
 #define SWITCH(opt) do
 #define HCTIWS(opt) while(0) ;
-#define CASE(s) if (!str_diffn(opt, (s), str_len(s)))
+#define CASE(s) if (n == sizeof(s) - 1 && !str_diffn(opt, (s), n))
 
 static void scanopt (stralloc *data, unsigned long *flags, char const *opt)
 {
