@@ -17,4 +17,5 @@ s6-swapon \
 s6-umount \
 
 SBIN_TARGETS :=
-LIBEXEC_TARGETS :=
+LIBEXEC_TARGETS := halt poweroff reboot
+
