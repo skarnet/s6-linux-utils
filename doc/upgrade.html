@@ -18,6 +18,16 @@
 
 <h1> What has changed in s6-linux-utils </h1>
 
+<h2> in 2.1.0.0 </h2>
+
+<ul>
+ <li> <a href="s6-halt.html">s6-halt</a>,
+<a href="s6-poweroff.html">s6-poweroff</a> and
+<a href="s6-reboot.html">s6-reboot</a> have changed behaviours.
+They now send a signal to process 1 by default; to make them
+perform a hard shutdown, add the <tt>-f</tt> option. </li>
+</ul>
+
 <h2> in 2.0.2.3 </h2>
 
 <ul>

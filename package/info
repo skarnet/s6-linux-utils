@@ -1,4 +1,4 @@
 package=s6-linux-utils
-version=2.0.2.3
+version=2.1.0.0
 category=admin
 package_macro_name=S6_LINUX_UTILS

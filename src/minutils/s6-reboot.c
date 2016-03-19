@@ -1,13 +1,7 @@
 /* ISC license. */
 
-#include <unistd.h>
-#include <sys/reboot.h>
-#include <skalibs/strerr2.h>
-
-int main ()
-{
-  PROG = "s6-reboot" ;
-  sync() ;
-  reboot(RB_AUTOBOOT) ;
-  strerr_diefu1sys(111, "reboot()") ;
-}
+#undef PROGNAME
+#define PROGNAME "s6-reboot"
+#undef WHATDEFAULT
+#define WHATDEFAULT 3
+#include "hpr.c"
