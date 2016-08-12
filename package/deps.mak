@@ -53,9 +53,9 @@ s6-swapoff: EXTRA_LIBS :=
 s6-swapoff: src/minutils/s6-swapoff.o -lskarnet
 s6-swapon: EXTRA_LIBS :=
 s6-swapon: src/minutils/s6-swapon.o -lskarnet
-s6-uevent-listener: EXTRA_LIBS :=
+s6-uevent-listener: EXTRA_LIBS := ${SPAWN_LIB}
 s6-uevent-listener: src/minutils/s6-uevent-listener.o -lskarnet
-s6-uevent-spawner: EXTRA_LIBS :=
+s6-uevent-spawner: EXTRA_LIBS := ${SPAWN_LIB}
 s6-uevent-spawner: src/minutils/s6-uevent-spawner.o -lskarnet
 s6-umount: EXTRA_LIBS :=
 s6-umount: src/minutils/s6-umount.o -lskarnet
