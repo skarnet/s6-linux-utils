@@ -3,14 +3,11 @@ s6-devd			0700
 s6-uevent-listener	0700
 s6-uevent-spawner	0755
 s6-freeramdisk		0700
-s6-halt			0700
 s6-hostname		0755
 s6-logwatch		0755
 s6-mount		0700
 s6-pivotchroot		0700
-s6-poweroff		0700
 s6-ps			0755
-s6-reboot		0700
 s6-swapoff		0700
 s6-swapon		0700
 s6-umount		0700

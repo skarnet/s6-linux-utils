@@ -149,7 +149,8 @@ int s6ps_statparse (pscan_t *p)
     if (pos + 1 > p->statlen) return 0 ;
     if (p->data.s[pos++] != ' ') return 0 ;
     w = (*scanfuncs[i])(p->data.s + pos, scanresults[i]) ;
-    if (!w) return 0 ; pos += w ;
+    if (!w) return 0 ;
+    pos += w ;
   }
   return 1 ;
 }
