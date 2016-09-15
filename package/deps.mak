@@ -4,6 +4,7 @@
 
 src/minutils/s6-chroot.o src/minutils/s6-chroot.lo: src/minutils/s6-chroot.c
 src/minutils/s6-devd.o src/minutils/s6-devd.lo: src/minutils/s6-devd.c src/include/s6-linux-utils/config.h
+src/minutils/s6-fillurandompool.o src/minutils/s6-fillurandompool.lo: src/minutils/s6-fillurandompool.c
 src/minutils/s6-freeramdisk.o src/minutils/s6-freeramdisk.lo: src/minutils/s6-freeramdisk.c
 src/minutils/s6-hostname.o src/minutils/s6-hostname.lo: src/minutils/s6-hostname.c
 src/minutils/s6-logwatch.o src/minutils/s6-logwatch.lo: src/minutils/s6-logwatch.c
@@ -27,6 +28,8 @@ s6-chroot: EXTRA_LIBS :=
 s6-chroot: src/minutils/s6-chroot.o -lskarnet
 s6-devd: EXTRA_LIBS :=
 s6-devd: src/minutils/s6-devd.o -lskarnet
+s6-fillurandompool: EXTRA_LIBS :=
+s6-fillurandompool: src/minutils/s6-fillurandompool.o -lskarnet
 s6-freeramdisk: EXTRA_LIBS :=
 s6-freeramdisk: src/minutils/s6-freeramdisk.o -lskarnet
 s6-hostname: EXTRA_LIBS :=
