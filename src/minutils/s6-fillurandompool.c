@@ -5,15 +5,18 @@
 #endif
 
 #include <unistd.h>
+#include <errno.h>
 #include <sys/syscall.h>
 #include <skalibs/strerr2.h>
 #include <skalibs/djbunix.h>
 
-#define USAGE "s6-fillurandompool"
-
 static int getrandom (void *buf, size_t buflen, unsigned int flags)
 {
+#ifdef SYS_getrandom
   return syscall(SYS_getrandom, buf, buflen, flags) ;
+#else
+  return (errno = ENOSYS, -1) ;
+#endif
 }
 
 int main (void)
