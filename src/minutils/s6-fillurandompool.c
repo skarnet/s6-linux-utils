@@ -5,7 +5,7 @@
 
 int main (void)
 {
-  unsigned char c ;
+  char c ;
   PROG = "s6-fillurandompool" ;
   if (!random_init())
     strerr_diefu1sys(111, "initialize random generator") ;
