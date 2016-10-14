@@ -1,29 +1,14 @@
 /* ISC license. */
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-
-#include <unistd.h>
-#include <errno.h>
-#include <sys/syscall.h>
 #include <skalibs/strerr2.h>
-#include <skalibs/djbunix.h>
-
-static int getrandom (void *buf, size_t buflen, unsigned int flags)
-{
-#ifdef SYS_getrandom
-  return syscall(SYS_getrandom, buf, buflen, flags) ;
-#else
-  return (errno = ENOSYS, -1) ;
-#endif
-}
+#include <skalibs/random.h>
 
 int main (void)
 {
-  char buf[256] ;
+  unsigned char c ;
   PROG = "s6-fillurandompool" ;
-  if (getrandom(buf, 256, 0) != 256)
-    strerr_diefu1sys(111, "getrandom") ;
+  if (!random_init())
+    strerr_diefu1sys(111, "initialize random generator") ;
+  random_string(&c, 1) ;
   return 0 ;
 }
