@@ -12,8 +12,7 @@ s6-pivotchroot \
 s6-ps \
 s6-swapoff \
 s6-swapon \
-s6-umount \
+s6-umount
 
-SBIN_TARGETS :=
 LIBEXEC_TARGETS :=
 
