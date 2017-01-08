@@ -4,11 +4,21 @@
 #define _S6PS_H_
 
 #include <sys/types.h>
-#include <skalibs/uint32.h>
+#include <stdint.h>
 #include <skalibs/uint64.h>
 #include <skalibs/stralloc.h>
 #include <skalibs/tai.h>
 #include <skalibs/avltreen.h>
+
+
+typedef struct dius_s dius_t, *dius_t_ref ;
+struct dius_s
+{
+  unsigned int left ;
+  size_t right ;
+} ;
+#define DIUS_ZERO { .left = 0, .right = 0 }
+
 
  /* pfield: the output fields */
 
@@ -60,20 +70,20 @@ typedef struct pscan_s pscan_t, *pscan_t_ref ;
 struct pscan_s
 {
   stralloc data ;
-  unsigned int pid ;
+  pid_t pid ;
   signed int height ;
-  unsigned int statlen ;
-  unsigned int commlen ;
-  unsigned int cmdlen ;
-  unsigned int envlen ;
+  size_t statlen ;
+  size_t commlen ;
+  size_t cmdlen ;
+  size_t envlen ;
   uid_t uid ;
   gid_t gid ;
-  uint32 ppid ;
+  pid_t ppid ;
   unsigned int state ;
-  uint32 pgrp ;
-  uint32 session ;
-  uint32 ttynr ;
-  int tpgid ;
+  pid_t pgrp ;
+  pid_t session ;
+  dev_t ttynr ;
+  pid_t tpgid ;
   uint64 utime ;
   uint64 stime ;
   uint64 cutime ;
@@ -86,9 +96,9 @@ struct pscan_s
   uint64 rss ;
   uint64 rsslim ;
   uint64 wchan ;
-  uint32 cpuno ;
-  uint32 rtprio ;
-  uint32 policy ;
+  uint32_t cpuno ;
+  uint32_t rtprio ;
+  uint32_t policy ;
 } ;
 
 #define PSCAN_ZERO \
@@ -130,7 +140,7 @@ extern void s6ps_otree (pscan_t *, unsigned int, avltreen *, unsigned int *) ;
 
 extern int s6ps_compute_boottime (pscan_t *, unsigned int) ;
 
-typedef int pfieldfmt_func_t (pscan_t *, unsigned int *, unsigned int *) ;
+typedef int pfieldfmt_func_t (pscan_t *, size_t *, size_t *) ;
 typedef pfieldfmt_func_t *pfieldfmt_func_t_ref ;
 
 extern pfieldfmt_func_t_ref *s6ps_pfield_fmt ;
@@ -139,13 +149,13 @@ extern void *left_dtok (unsigned int, void *) ;
 extern int uint_cmp (void const *, void const *, void *) ;
 extern int s6ps_pwcache_init (void) ;
 extern void s6ps_pwcache_finish (void) ;
-extern int s6ps_pwcache_lookup (stralloc *, unsigned int) ;
+extern int s6ps_pwcache_lookup (stralloc *, uid_t) ;
 extern int s6ps_grcache_init (void) ;
 extern void s6ps_grcache_finish (void) ;
-extern int s6ps_grcache_lookup (stralloc *, unsigned int) ;
+extern int s6ps_grcache_lookup (stralloc *, gid_t) ;
 extern int s6ps_ttycache_init (void) ;
 extern void s6ps_ttycache_finish (void) ;
-extern int s6ps_ttycache_lookup (stralloc *, uint32) ;
+extern int s6ps_ttycache_lookup (stralloc *, dev_t) ;
 extern int s6ps_wchan_init (char const *) ;
 extern void s6ps_wchan_finish (void) ;
 extern int s6ps_wchan_lookup (stralloc *, uint64) ;

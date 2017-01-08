@@ -9,8 +9,6 @@
 #include <errno.h>
 #include <skalibs/bytestr.h>
 #include <skalibs/uint.h>
-#include <skalibs/uint32.h>
-#include <skalibs/diuint32.h>
 #include <skalibs/buffer.h>
 #include <skalibs/stralloc.h>
 #include <skalibs/genalloc.h>
@@ -22,32 +20,19 @@
 static avltree ttycache_tree = AVLTREE_ZERO ;
 static genalloc ttycache_index = GENALLOC_ZERO ;
 
-static void *left32_dtok (unsigned int d, void *x)
-{
-  return (void *)&genalloc_s(diuint32, (genalloc *)x)[d].left ;
-}
-
-static int uint32_cmp (void const *a, void const *b, void *x)
-{
-  register uint32 aa = *(uint32 *)a ;
-  register uint32 bb = *(uint32 *)b ;
-  (void)x ;
-  return (aa < bb) ? -1 : (aa > bb) ;
-}
-
 int s6ps_ttycache_init (void)
 {
-  avltree_init(&ttycache_tree, 5, 3, 8, &left32_dtok, &uint32_cmp, &ttycache_index) ;
+  avltree_init(&ttycache_tree, 5, 3, 8, &left_dtok, &uint_cmp, &ttycache_index) ;
   return 1 ;
 }
 
 void s6ps_ttycache_finish (void)
 {
   avltree_free(&ttycache_tree) ;
-  genalloc_free(diuint, &ttycache_index) ;
+  genalloc_free(dius_t, &ttycache_index) ;
 }
 
-static int check (char const *s, uint32 ttynr)
+static int check (char const *s, dev_t ttynr)
 {
   struct stat st ;
   if (stat(s, &st) < 0) return 0 ;
@@ -57,7 +42,7 @@ static int check (char const *s, uint32 ttynr)
 
  /* No blind scanning of all /dev or /sys/devices, kthx */
 
-static int ttyguess (stralloc *sa, uint32 ttynr)
+static int ttyguess (stralloc *sa, dev_t ttynr)
 {
   unsigned int maj = major(ttynr), min = minor(ttynr) ;
 
@@ -80,7 +65,7 @@ static int ttyguess (stralloc *sa, uint32 ttynr)
   {
     int fd ;
     char path[23 + 2 * UINT_FMT] = "/sys/dev/char/" ;
-    register unsigned int pos = 14 ;
+    register size_t pos = 14 ;
     pos += uint_fmt(path + pos, maj) ;
     path[pos++] = ':' ;
     pos += uint_fmt(path + pos, min) ;
@@ -90,7 +75,7 @@ static int ttyguess (stralloc *sa, uint32 ttynr)
     {
       char buf[4097] ;
       buffer b = BUFFER_INIT(&buffer_read, fd, buf, 4097) ;
-      unsigned int start = satmp.len ;
+      size_t start = satmp.len ;
       register int r ;
       for (;;)
       {
@@ -114,7 +99,7 @@ static int ttyguess (stralloc *sa, uint32 ttynr)
  /* Fallback: print explicit maj:min */
   {
     char tmp[3 + 2 * UINT_FMT] = "(" ;
-    register unsigned int pos = 1 ;
+    register size_t pos = 1 ;
     pos += uint_fmt(tmp + pos, maj) ;
     tmp[pos++] = ':' ;
     pos += uint_fmt(tmp + pos, min) ;
@@ -124,24 +109,24 @@ static int ttyguess (stralloc *sa, uint32 ttynr)
   }
 }
 
-int s6ps_ttycache_lookup (stralloc *sa, uint32 ttynr)
+int s6ps_ttycache_lookup (stralloc *sa, dev_t ttynr)
 {
   int wasnull = !satmp.s ;
-  diuint32 d = { .left = ttynr, .right = satmp.len } ;
+  dius_t d = { .left = (unsigned int)ttynr, .right = satmp.len } ;
   unsigned int i ;
   if (!avltree_search(&ttycache_tree, &d.left, &i))
   {
-    unsigned int n = genalloc_len(diuint32, &ttycache_index) ;
+    size_t n = genalloc_len(dius_t, &ttycache_index) ;
     if (!ttyguess(&satmp, ttynr)) return 0 ;
-    if (!genalloc_append(diuint32, &ttycache_index, &d)) goto err ;
+    if (!genalloc_append(dius_t, &ttycache_index, &d)) goto err ;
     if (!avltree_insert(&ttycache_tree, n))
     {
-      genalloc_setlen(diuint32, &ttycache_index, n) ;
+      genalloc_setlen(dius_t, &ttycache_index, n) ;
       goto err ;
     }
     i = n ;
   }
-  return stralloc_cats(sa, satmp.s + genalloc_s(diuint32, &ttycache_index)[i].right) ;
+  return stralloc_cats(sa, satmp.s + genalloc_s(dius_t, &ttycache_index)[i].right) ;
  err:
   {
     register int e = errno ;

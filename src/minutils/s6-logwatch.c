@@ -1,5 +1,6 @@
 /* ISC license. */
 
+#include <sys/types.h>
 #include <errno.h>
 #include <unistd.h>
 #include <signal.h>
@@ -36,15 +37,15 @@ static void X (void)
   strerr_diefu1x(101, "follow file state changes (race condition triggered). Sorry.") ;
 }
 
-static unsigned long nbcat (int fdcurrent)
+static size_t nbcat (int fdcurrent)
 {
   char buf[N+1] ;
   buffer b = BUFFER_INIT(&buffer_read, fdcurrent, buf, N+1) ;
   siovec_t v[2] ;
-  unsigned long bytes = 0 ;
+  size_t bytes = 0 ;
   for (;;)
   {
-    int r = sanitize_read(buffer_fill(&b)) ;
+    ssize_t r = sanitize_read(buffer_fill(&b)) ;
     if (!r) break ;
     if (r < 0)
     {
@@ -85,8 +86,8 @@ int main (int argc, char const *const *argv)
   if (chdir(dir) < 0) strerr_diefu2sys(111, "chdir to ", dir) ;
   {
     iopause_fd x[1] = { { -1, IOPAUSE_READ, 0 } } ;
+    size_t pos = 0 ;
     int fdcurrent = -1 ;
-    unsigned long pos = 0 ;
     int w ;
     bstate_t state = B_TAILING ;
     x[0].fd = inotify_init() ;
@@ -103,20 +104,20 @@ int main (int argc, char const *const *argv)
 
     for (;;)
     {
-      int r ;
+      int rr ;
       if (!bufalloc_flush(bufalloc_1)) strerr_diefu1sys(111, "write to stdout") ;
-      r = iopause(x, 1, 0, 0) ;
-      if (r < 0) strerr_diefu1sys(111, "iopause") ;
+      rr = iopause(x, 1, 0, 0) ;
+      if (rr < 0) strerr_diefu1sys(111, "iopause") ;
       if (x[0].revents & IOPAUSE_READ)
       {
         char iebuf[IESIZE] ;
         while (bufalloc_len(bufalloc_1) < maxlen)
         {
-          unsigned int i = 0 ;
-          r = sanitize_read(fd_read(x[0].fd, iebuf, IESIZE)) ;
+          size_t i = 0 ;
+          ssize_t r = sanitize_read(fd_read(x[0].fd, iebuf, IESIZE)) ;
           if (r < 0) strerr_diefu1sys(111, "read from inotify fd") ;
           if (!r) break ;
-          while (i < (unsigned int)r)
+          while (i < (size_t)r)
           {
             struct inotify_event *ie = (struct inotify_event *)(iebuf + i) ;
             if ((ie->wd != w) || !ie->len || str_diff(ie->name, "current")) goto cont ;

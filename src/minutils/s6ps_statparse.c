@@ -1,5 +1,6 @@
 /* ISC license. */
 
+#include <sys/types.h>
 #include <errno.h>
 #include <skalibs/uint32.h>
 #include <skalibs/uint64.h>
@@ -15,34 +16,50 @@
 
 #define STATVARS 41
 
-typedef unsigned int scanfunc_t (char const *, void *) ;
+typedef size_t scanfunc_t (char const *, void *) ;
 typedef scanfunc_t *scanfunc_t_ref ;
 
-static unsigned int f32 (char const *s, void *u32)
+static size_t f32 (char const *s, void *u32)
 {
   uint32 *u = u32 ;
   return uint32_scan(s, u) ;
 }
 
-static unsigned int f64 (char const *s, void *u64)
+static size_t f64 (char const *s, void *u64)
 {
   uint64 *u = u64 ;
   return uint64_scan(s, u) ;
 }
 
-static unsigned int fint (char const *s, void *i)
+static size_t fint (char const *s, void *i)
 {
   int *d = i ;
   return int_scan(s, d) ;
 }
 
+static size_t fpid (char const *s, void *p)
+{
+  uint64 u ;
+  register size_t l = uint64_scan(s, &u) ;
+  *(pid_t *)p = u ;
+  return l ;
+}
+
+static size_t fdev (char const *s, void *p)
+{
+  uint64 u ;
+  register size_t l = uint64_scan(s, &u) ;
+  *(dev_t *)p = u ;
+  return l ;
+}
+
 static scanfunc_t_ref scanfuncs[STATVARS] =
 {
-  &f32, /* ppid */
-  &f32, /* pgrp */
-  &f32, /* session */
-  &f32, /* tty_nr */
-  &fint, /* tpgid */
+  &fpid, /* ppid */
+  &fpid, /* pgrp */
+  &fpid, /* session */
+  &fdev, /* tty_nr */
+  &fpid, /* tpgid */
   &f32, /* flags */
   &f32, /* minflt */
   &f32, /* cminflt */
@@ -85,7 +102,7 @@ int s6ps_statparse (pscan_t *p)
 {
   uint64 dummy64 ;
   uint32 dummy32 ;
-  unsigned int pos = 0 ;
+  size_t pos = 0 ;
   void *scanresults[STATVARS] =
   {
     &p->ppid,
@@ -145,7 +162,7 @@ int s6ps_statparse (pscan_t *p)
   p->state = pos++ ;
   for (; i < STATVARS ; i++)
   {
-    unsigned int w ;
+    size_t w ;
     if (pos + 1 > p->statlen) return 0 ;
     if (p->data.s[pos++] != ' ') return 0 ;
     w = (*scanfuncs[i])(p->data.s + pos, scanresults[i]) ;

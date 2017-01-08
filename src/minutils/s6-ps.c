@@ -49,7 +49,7 @@
 
 void *left_dtok (unsigned int d, void *x)
 {
-  return (void *)&genalloc_s(diuint, (genalloc *)x)[d].left ;
+  return (void *)&genalloc_s(dius_t, (genalloc *)x)[d].left ;
 }
 
 int uint_cmp (void const *a, void const *b, void *x)
@@ -81,7 +81,7 @@ static inline unsigned int fieldscan (char const *s, pfield_t *list, uint64 *fbf
   int cont = 1 ;
   for (; cont ; n++)
   {
-    unsigned int len = str_chr(s, ',') ;
+    size_t len = str_chr(s, ',') ;
     register pfield_t i = 0 ;
     if (!len) strerr_dief3x(100, "invalid", " (empty)", " field for -o option") ;
     if (!s[len]) cont = 0 ;
@@ -103,9 +103,9 @@ static inline unsigned int fieldscan (char const *s, pfield_t *list, uint64 *fbf
   return n ;
 }
 
-static int slurpit (unsigned int dirfd, stralloc *data, char const *buf, char const *what, unsigned int *len)
+static int slurpit (unsigned int dirfd, stralloc *data, char const *buf, char const *what, size_t *len)
 {
-  unsigned int start = data->len ;
+  size_t start = data->len ;
   int fd = open_readat(dirfd, what) ;
   if (fd < 0) return 0 ;
   if (!slurp(data, fd)) strerr_diefu4sys(111, "slurp ", buf, "/", what) ;
@@ -119,10 +119,10 @@ int main (int argc, char const *const *argv)
   genalloc pscans = GENALLOC_ZERO ; /* array of pscan_t */
   pfield_t fieldlist[PFIELD_PHAIL] = { PFIELD_USER, PFIELD_PID, PFIELD_TTY, PFIELD_STATE, PFIELD_START, PFIELD_ARGS } ;
   uint64 fbf = (1 << PFIELD_USER) | (1 << PFIELD_PID) | (1 << PFIELD_TTY) | (1 << PFIELD_STATE) | (1 << PFIELD_START) | (1 << PFIELD_ARGS) ;
-  unsigned int mypos = 0 ;
+  size_t mypos = 0 ;
   unsigned int nfields = 6 ;
   pscan_t *p ;
-  unsigned int n ;
+  size_t n ;
   unsigned int spacing = 2 ;
   int flagtree = 0 ;
   char const *wchanfile = 0 ;
@@ -211,7 +211,7 @@ int main (int argc, char const *const *argv)
 
   {
     int needstatdir = !!(fbf & ((1 << PFIELD_USER) | (1 << PFIELD_GROUP))) ;
-    unsigned int mypid = getpid() ;
+    pid_t mypid = getpid() ;
     DIR *dir = opendir("/proc") ;
     direntry *d ;
     char buf[25] = "/proc/" ;
@@ -220,11 +220,13 @@ int main (int argc, char const *const *argv)
     for (;;)
     {
       pscan_t pscan = PSCAN_ZERO ;
+      uint64 u ;
       int dirfd ;
       errno = 0 ;
       d = readdir(dir) ;
       if (!d) break ;
-      if (!uint0_scan(d->d_name, &pscan.pid)) continue ;
+      if (!uint640_scan(d->d_name, &u)) continue ;
+      pscan.pid = u ;
       strcpy(buf+6, d->d_name) ;
       dirfd = open_read(buf) ;
       if (dirfd < 0) continue ;
@@ -320,9 +322,9 @@ int main (int argc, char const *const *argv)
     }
 
     {
-      unsigned int fmtpos[n][nfields] ;
-      unsigned int fmtlen[n][nfields] ;
-      unsigned int maxlen[nfields] ;
+      size_t fmtpos[n][nfields] ;
+      size_t fmtlen[n][nfields] ;
+      size_t maxlen[nfields] ;
       unsigned int maxspaces = 0 ;
       for (i = 0 ; i < nfields ; i++) maxlen[i] = str_len(s6ps_fieldheaders[fieldlist[i]]) ;
       for (i = 0 ; i < n ; i++)
@@ -349,7 +351,7 @@ int main (int argc, char const *const *argv)
         for (i = 0 ; i < nfields ; i++)
         {
           register unsigned int rightformatted = !!(((uint64)1 << fieldlist[i]) & RIGHTFORMATTED) ;
-          register unsigned int len = str_len(s6ps_fieldheaders[fieldlist[i]]) ;
+          register size_t len = str_len(s6ps_fieldheaders[fieldlist[i]]) ;
           if (rightformatted && (buffer_put(buffer_1, spaces, maxlen[i] - len) < (int)(maxlen[i] - len)))
             goto nowrite ;
           if (buffer_put(buffer_1, s6ps_fieldheaders[fieldlist[i]], len) < (int)len)

@@ -46,8 +46,8 @@ static inline void on_event (char const *const *argv, char const *const *envp, c
 {
   posix_spawnattr_t attr ;
   posix_spawn_file_actions_t actions ;
-  unsigned int envlen = env_len(envp) ;
-  unsigned int n = envlen + 1 + byte_count(s, len, '\0') ;
+  size_t envlen = env_len(envp) ;
+  size_t n = envlen + 1 + byte_count(s, len, '\0') ;
   pid_t mypid ;
   int e ;
   char const *v[n] ;
@@ -134,8 +134,8 @@ static inline void handle_stdin (stralloc *sa, char const *linevar, char const *
 {
   while (!pid)
   {
-    unsigned int start ;
-    register int r ;
+    size_t start ;
+    register ssize_t r ;
     if (!sa->len && linevar)
       if (!stralloc_cats(sa, linevar) || !stralloc_catb(sa, "=", 1))
         dienomem() ;
@@ -162,7 +162,8 @@ static inline void handle_stdin (stralloc *sa, char const *linevar, char const *
 
 static inline int make_ttos (char const *s)
 {
-  unsigned int tlife = 0, tterm = 0, tkill = 0, pos = 0 ;
+  size_t pos = 0 ;
+  unsigned int tlife = 0, tterm = 0, tkill = 0 ;
   pos += uint_scan(s + pos, &tlife) ;
   if (s[pos] && s[pos++] != ':') return 0 ;
   if (!tlife) return 1 ;

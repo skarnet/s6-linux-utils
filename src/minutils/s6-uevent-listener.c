@@ -36,7 +36,7 @@ static pid_t pid ;
 
 static inline int fd_recvmsg (int fd, struct msghdr *hdr)
 {
-  int r ;
+  ssize_t r ;
   do r = recvmsg(fd, hdr, MSG_DONTWAIT) ;
   while ((r == -1) && (errno == EINTR)) ;
   return r ;
@@ -110,7 +110,7 @@ static inline void handle_netlink (void)
     .msg_flags = 0
   } ;
   siovec_t v[2] ;
-  register int r ;
+  register ssize_t r ;
   buffer_wpeek(&b1, v) ;
   siovec_trunc(v, 2, siovec_len(v, 2) - 1) ;
   iovec_from_siovec(iov, v, 2) ;

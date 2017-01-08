@@ -1,5 +1,6 @@
 /* ISC license. */
 
+#include <sys/types.h>
 #include <sys/utsname.h>
 #include <skalibs/uint64.h>
 #include <skalibs/bytestr.h>
@@ -21,7 +22,7 @@ int s6ps_wchan_init (char const *file)
   {
     char *files[3] = { "/proc/kallsyms", 0, "/boot/System.map" } ;
     struct utsname uts ;
-    unsigned int n ;
+    size_t n ;
     if (uname(&uts) < 0) return 0 ;
     n = str_len(uts.release) ;
     {
@@ -37,15 +38,15 @@ int s6ps_wchan_init (char const *file)
     }
   }
   {
-    unsigned int i = 0 ;
-    if (!genalloc_append(unsigned int, &ind, &i)) goto err2 ;
+    size_t i = 0 ;
+    if (!genalloc_append(size_t, &ind, &i)) goto err2 ;
     for (i = 1 ; i <= sysmap.len ; i++)
       if (sysmap.s[i-1] == '\n')
-        if (!genalloc_append(unsigned int, &ind, &i)) goto err ;
+        if (!genalloc_append(size_t, &ind, &i)) goto err ;
   }
   return 1 ;
  err:
-  genalloc_free(unsigned int, &ind) ;
+  genalloc_free(size_t, &ind) ;
  err2:
   stralloc_free(&sysmap) ;
   return 0 ;
@@ -53,13 +54,13 @@ int s6ps_wchan_init (char const *file)
 
 void s6ps_wchan_finish (void)
 {
-  genalloc_free(unsigned int, &ind) ;
+  genalloc_free(size_t, &ind) ;
   stralloc_free(&sysmap) ;
 }
 
-static inline unsigned int lookup (uint64 addr, unsigned int *i)
+static inline size_t lookup (uint64 addr, size_t *i)
 {
-  unsigned int low = 0, mid, high = genalloc_len(unsigned int, &ind), len ;
+  size_t low = 0, mid, high = genalloc_len(size_t, &ind), len ;
   for (;;)
   {
     uint64 cur ;
@@ -81,12 +82,12 @@ int s6ps_wchan_lookup (stralloc *sa, uint64 addr)
   if (!addr) return stralloc_catb(sa, "-", 1) ;
   if (sysmap.len)
   {
-    unsigned int i ;
-    unsigned int len = lookup(addr, &i) ;
-    register unsigned int pos ;
+    size_t i ;
+    size_t len = lookup(addr, &i) ;
+    register size_t pos ;
     if (!len) return stralloc_catb(sa, "?", 1) ;
-    pos = genalloc_s(unsigned int, &ind)[i] + len + 3 ;
-    return stralloc_catb(sa, sysmap.s + pos, genalloc_s(unsigned int, &ind)[i+1] - 1 - pos) ;
+    pos = genalloc_s(size_t, &ind)[i] + len + 3 ;
+    return stralloc_catb(sa, sysmap.s + pos, genalloc_s(size_t, &ind)[i+1] - 1 - pos) ;
   }
   if (!stralloc_readyplus(sa, UINT64_FMT + 3)) return 0 ;
   stralloc_catb(sa, "(0x", 3) ;

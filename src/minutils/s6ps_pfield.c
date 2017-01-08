@@ -94,7 +94,7 @@ char const *const *s6ps_opttable = opttable ;
 
 static tain_t boottime = TAIN_EPOCH ;
 
-static int fmt_32 (pscan_t *p, unsigned int *pos, unsigned int *len, uint32 u)
+static int fmt_32 (pscan_t *p, size_t *pos, size_t *len, uint32 u)
 {
   if (!stralloc_readyplus(&p->data, UINT32_FMT)) return 0 ;
   *pos = p->data.len ;
@@ -103,7 +103,7 @@ static int fmt_32 (pscan_t *p, unsigned int *pos, unsigned int *len, uint32 u)
   return 1 ;
 }
 
-static int fmt_64 (pscan_t *p, unsigned int *pos, unsigned int *len, uint64 u)
+static int fmt_64 (pscan_t *p, size_t *pos, size_t *len, uint64 u)
 {                                                          
   if (!stralloc_readyplus(&p->data, UINT64_FMT)) return 0 ;
   *pos = p->data.len ;
@@ -112,7 +112,7 @@ static int fmt_64 (pscan_t *p, unsigned int *pos, unsigned int *len, uint64 u)
   return 1 ;
 }                                                          
 
-static int fmt_i (pscan_t *p, unsigned int *pos, unsigned int *len, int d)
+static int fmt_i (pscan_t *p, size_t *pos, size_t *len, int d)
 {
   if (!stralloc_readyplus(&p->data, UINT32_FMT+1)) return 0 ;
   *pos = p->data.len ;
@@ -121,19 +121,19 @@ static int fmt_i (pscan_t *p, unsigned int *pos, unsigned int *len, int d)
   return 1 ;
 }
 
-static int fmt_pid (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_pid (pscan_t *p, size_t *pos, size_t *len)
 {
-  return fmt_32(p, pos, len, p->pid) ;
+  return fmt_64(p, pos, len, p->pid) ;
 }
 
-static int fmt_comm (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_comm (pscan_t *p, size_t *pos, size_t *len)
 {
   *pos = p->statlen ;
   *len = p->commlen ;
   return 1 ;
 }
 
-static int fmt_s (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_s (pscan_t *p, size_t *pos, size_t *len)
 {
   if (!stralloc_readyplus(&p->data, 4)) return 0 ;
   *pos = p->data.len ;
@@ -148,26 +148,26 @@ static int fmt_s (pscan_t *p, unsigned int *pos, unsigned int *len)
   return 1 ;
 }
 
-static int fmt_ppid (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_ppid (pscan_t *p, size_t *pos, size_t *len)
 {
-  return fmt_32(p, pos, len, p->ppid) ;
+  return fmt_64(p, pos, len, p->ppid) ;
 }
 
-static int fmt_pgrp (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_pgrp (pscan_t *p, size_t *pos, size_t *len)
 {
-  return fmt_32(p, pos, len, p->pgrp) ;
+  return fmt_64(p, pos, len, p->pgrp) ;
 }
 
-static int fmt_session (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_session (pscan_t *p, size_t *pos, size_t *len)
 {
-  return fmt_32(p, pos, len, p->session) ;
+  return fmt_64(p, pos, len, p->session) ;
 }
 
-static int fmt_ttynr(pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_ttynr(pscan_t *p, size_t *pos, size_t *len)
 {
   if (p->ttynr)
   {
-    unsigned int tmppos = p->data.len ;
+    size_t tmppos = p->data.len ;
     if (!s6ps_ttycache_lookup(&p->data, p->ttynr)) return 0 ;
     *pos = tmppos ;
     *len = p->data.len - tmppos ;
@@ -181,9 +181,9 @@ static int fmt_ttynr(pscan_t *p, unsigned int *pos, unsigned int *len)
   return 1 ;
 }
 
-static int fmt_tpgid (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_tpgid (pscan_t *p, size_t *pos, size_t *len)
 {
-  return fmt_i(p, pos, len, p->tpgid) ;
+  return p->tpgid < 0 ? fmt_i(p, pos, len, -1) : fmt_64(p, pos, len, p->tpgid) ;
 }
 
 static unsigned int gethz (void)
@@ -220,7 +220,7 @@ int s6ps_compute_boottime (pscan_t *p, unsigned int mypos)
   }
 }
 
-static int fmt_jiffies (pscan_t *p, unsigned int *pos, unsigned int *len, uint64 j)
+static int fmt_jiffies (pscan_t *p, size_t *pos, size_t *len, uint64 j)
 {
   unsigned int hz = gethz() ;
   uint32 hrs, mins, secs, hfrac ;
@@ -261,45 +261,45 @@ static int fmt_jiffies (pscan_t *p, unsigned int *pos, unsigned int *len, uint64
   return 1 ;
 }
 
-static int fmt_utime (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_utime (pscan_t *p, size_t *pos, size_t *len)
 {
   return fmt_jiffies(p, pos, len, p->utime) ;
 }
 
-static int fmt_stime (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_stime (pscan_t *p, size_t *pos, size_t *len)
 {
   return fmt_jiffies(p, pos, len, p->stime) ;
 }
 
-static int fmt_cutime (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_cutime (pscan_t *p, size_t *pos, size_t *len)
 {
   return fmt_jiffies(p, pos, len, p->utime + p->cutime) ;
 }
 
-static int fmt_cstime (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_cstime (pscan_t *p, size_t *pos, size_t *len)
 {
   return fmt_jiffies(p, pos, len, p->stime + p->cstime) ;
 }
 
-static int fmt_prio (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_prio (pscan_t *p, size_t *pos, size_t *len)
 {
   return fmt_i(p, pos, len, p->prio) ;
 }
 
-static int fmt_nice (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_nice (pscan_t *p, size_t *pos, size_t *len)
 {
   return fmt_i(p, pos, len, p->nice) ;
 }
 
-static int fmt_threads (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_threads (pscan_t *p, size_t *pos, size_t *len)
 {
   return fmt_32(p, pos, len, p->threads) ;
 }
 
-static int fmt_timedate (pscan_t *p, unsigned int *pos, unsigned int *len, struct tm const *tm)
+static int fmt_timedate (pscan_t *p, size_t *pos, size_t *len, struct tm const *tm)
 {
   static struct tm nowtm = { .tm_year = 0 } ;
-  unsigned int tmplen ;
+  size_t tmplen ;
   char *tmpstrf = "%F" ;
   if (!nowtm.tm_year && !localtm_from_tai(&nowtm, tain_secp(&STAMP), 1)) return 0 ;
   if (!stralloc_readyplus(&p->data, 20)) return 0 ;
@@ -315,7 +315,7 @@ static int fmt_timedate (pscan_t *p, unsigned int *pos, unsigned int *len, struc
   return 1 ;
 }
 
-static int fmt_start (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_start (pscan_t *p, size_t *pos, size_t *len)
 {
   struct tm starttm ;
   unsigned int hz = gethz() ;
@@ -343,53 +343,53 @@ static unsigned int getpgsz (void)
   return pgsz ;
 }
 
-static int fmt_vsize (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_vsize (pscan_t *p, size_t *pos, size_t *len)
 {
   return fmt_64(p, pos, len, p->vsize / 1024) ;
 }
 
-static int fmt_rss (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_rss (pscan_t *p, size_t *pos, size_t *len)
 {
   return fmt_64(p, pos, len, p->rss * (getpgsz() / 1024)) ;
 }
 
-static int fmt_rsslim (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_rsslim (pscan_t *p, size_t *pos, size_t *len)
 {
   return fmt_64(p, pos, len, p->rsslim / 1024) ;
 }
 
-static int fmt_cpuno (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_cpuno (pscan_t *p, size_t *pos, size_t *len)
 {
   return fmt_32(p, pos, len, p->cpuno) ;
 }
 
-static int fmt_rtprio (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_rtprio (pscan_t *p, size_t *pos, size_t *len)
 {
   return fmt_32(p, pos, len, p->rtprio) ;
 }
 
-static int fmt_policy (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_policy (pscan_t *p, size_t *pos, size_t *len)
 {
   static char const *const policies[8] = { "NORMAL", "FIFO", "RR", "BATCH", "ISO", "IDLE", "UNKNOWN", "UNKNOWN" } ;
-  unsigned int tmppos = p->data.len ;
+  size_t tmppos = p->data.len ;
   if (!stralloc_cats(&p->data, policies[p->policy & 7])) return 0 ;
   *pos = tmppos ;
   *len = p->data.len - tmppos ;
   return 1 ;
 }
 
-static int fmt_user (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_user (pscan_t *p, size_t *pos, size_t *len)
 {
-  unsigned int tmppos = p->data.len ;
+  size_t tmppos = p->data.len ;
   if (!s6ps_pwcache_lookup(&p->data, p->uid)) return 0 ;
   *pos = tmppos ;
   *len = p->data.len - tmppos ;
   return 1 ;
 }
 
-static int fmt_group (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_group (pscan_t *p, size_t *pos, size_t *len)
 {
-  unsigned int tmppos = p->data.len ;
+  size_t tmppos = p->data.len ;
   if (!s6ps_grcache_lookup(&p->data, p->gid)) return 0 ;
   *pos = tmppos ;
   *len = p->data.len - tmppos ;
@@ -407,7 +407,7 @@ static uint64 gettotalmem (void)
   return totalmem ;
 }
 
-static int percent (stralloc *sa, unsigned int n, unsigned int *pos, unsigned int *len)
+static int percent (stralloc *sa, unsigned int n, size_t *pos, size_t *len)
 {
   if (!stralloc_readyplus(sa, UINT64_FMT+1)) return 0 ;
   *pos = sa->len ;
@@ -419,22 +419,22 @@ static int percent (stralloc *sa, unsigned int n, unsigned int *pos, unsigned in
   return 1 ;
 }
 
-static int fmt_pmem (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_pmem (pscan_t *p, size_t *pos, size_t *len)
 {
   uint64 l = gettotalmem() ;
   return l ? percent(&p->data, p->rss * getpgsz() * 10000 / l, pos, len) : 0 ;
 }
 
-static int fmt_wchan (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_wchan (pscan_t *p, size_t *pos, size_t *len)
 {
-  unsigned int tmppos = p->data.len ;
+  size_t tmppos = p->data.len ;
   if (!s6ps_wchan_lookup(&p->data, p->wchan)) return 0 ;
   *len = p->data.len - tmppos ;
   *pos = tmppos ;
   return 1 ;
 }
 
-static int fmt_args (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_args (pscan_t *p, size_t *pos, size_t *len)
 {
   if (!stralloc_readyplus(&p->data, (p->height << 2) + (p->cmdlen ? p->cmdlen : p->commlen + (p->data.s[p->state] == 'Z' ? 11 : 3))))
     return 0 ;
@@ -451,7 +451,7 @@ static int fmt_args (pscan_t *p, unsigned int *pos, unsigned int *len)
   {
     register char const *r = p->data.s + p->statlen + p->commlen ;
     register char *w = p->data.s + p->data.len ;
-    register unsigned int i = p->cmdlen ;
+    register size_t i = p->cmdlen ;
     while (i--)
     {
       register char c = *r++ ;
@@ -470,9 +470,9 @@ static int fmt_args (pscan_t *p, unsigned int *pos, unsigned int *len)
   return 1 ;
 }
 
-static int fmt_env (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_env (pscan_t *p, size_t *pos, size_t *len)
 {
-  register unsigned int i = 0 ;
+  register size_t i = 0 ;
   if (!p->envlen)
   {
     if (!stralloc_catb(&p->data, "*", 1)) return 0 ;
@@ -497,23 +497,23 @@ static uint64 gettotalj (uint64 j)
   return j ;
 }
 
-static int fmt_pcpu (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_pcpu (pscan_t *p, size_t *pos, size_t *len)
 {
   return percent(&p->data, 10000 * (p->utime + p->stime) / gettotalj(p->start), pos, len) ;
 }
 
 
-static int fmt_ttime (pscan_t *p, unsigned int *pos, unsigned int *len) 
+static int fmt_ttime (pscan_t *p, size_t *pos, size_t *len) 
 {
   return fmt_jiffies(p, pos, len, p->utime + p->stime) ;
 }
 
-static int fmt_cttime (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_cttime (pscan_t *p, size_t *pos, size_t *len)
 {
   return fmt_jiffies(p, pos, len, p->utime + p->stime + p->cutime + p->cstime) ;
 }
 
-static int fmt_tstart (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_tstart (pscan_t *p, size_t *pos, size_t *len)
 {
   unsigned int hz = gethz() ;
   tain_t blah = { .sec = { .x = p->start / hz }, .nano = (p->start % hz) * (1000000000 / hz) } ;
@@ -525,7 +525,7 @@ static int fmt_tstart (pscan_t *p, unsigned int *pos, unsigned int *len)
   return 1 ;
 }
 
-static int fmt_cpcpu (pscan_t *p, unsigned int *pos, unsigned int *len)
+static int fmt_cpcpu (pscan_t *p, size_t *pos, size_t *len)
 {
   return percent(&p->data, 10000 * (p->utime + p->stime + p->cutime + p->cstime) / gettotalj(p->start), pos, len) ;
 }

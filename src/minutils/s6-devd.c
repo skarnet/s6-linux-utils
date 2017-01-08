@@ -1,5 +1,6 @@
 /* ISC license. */
 
+#include <sys/types.h>
 #include <skalibs/uint.h>
 #include <skalibs/sgetopt.h>
 #include <skalibs/strerr2.h>
@@ -11,7 +12,8 @@
 
 static inline int check_targ (char const *s)
 {
-  unsigned int t = 0, pos = 0 ;
+  size_t pos = 0 ;
+  unsigned int t = 0 ;
   pos += uint_scan(s + pos, &t) ;
   if (s[pos] && s[pos++] != ':') return 0 ;
   if (!t) return 1 ;
@@ -50,7 +52,8 @@ int main (int argc, char const *const *argv, char const *const *envp)
   if (!argc) strerr_dieusage(100, USAGE) ;
 
   {
-    unsigned int m = 0, pos = 0 ;
+    size_t pos = 0 ;
+    unsigned int m = 0 ;
     char fmt[UINT_FMT * 3] ;
     char const *newargv[argc + 15] ;
     newargv[m++] = S6_LINUX_UTILS_BINPREFIX "s6-uevent-listener" ;

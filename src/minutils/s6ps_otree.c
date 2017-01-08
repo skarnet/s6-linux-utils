@@ -4,6 +4,8 @@
 #include <skalibs/avltreen.h>
 #include "s6-ps.h"
 
+/* XXX: need to change all the types if the libdatastruct API changes */
+
 typedef struct ptreeiter_s ptreeiter_t, *ptreeiter_t_ref ;
 struct ptreeiter_s
 {

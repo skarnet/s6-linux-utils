@@ -1,5 +1,6 @@
 /* ISC license. */
 
+#include <sys/types.h>
 #include <errno.h>
 #include <skalibs/bytestr.h>
 #include <skalibs/buffer.h>
@@ -12,7 +13,7 @@ extern int swapoff (char const *) ;
 
 #define USAGE "s6-swapoff device <or> s6-swapoff -a"
 
-#define BUFSIZE 4096
+#define BUFSIZE 4095
 
 static int swapoffall ( )
 {
@@ -27,7 +28,7 @@ static int swapoffall ( )
   if (skagetln(&b, &sa, '\n') < 0) strerr_diefu1sys(111, "skagetln") ;
   for (;;)
   {
-    unsigned int n ;
+    size_t n ;
     sa.len = 0 ;
     r = skagetln(&b, &sa, '\n') ;
     if (r < 0) strerr_diefu1sys(111, "skagetln") ;

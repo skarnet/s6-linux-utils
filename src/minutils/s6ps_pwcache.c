@@ -4,7 +4,6 @@
 #include <pwd.h>
 #include <errno.h>
 #include <skalibs/uint.h>
-#include <skalibs/diuint.h>
 #include <skalibs/stralloc.h>
 #include <skalibs/genalloc.h>
 #include <skalibs/skamisc.h>
@@ -23,18 +22,18 @@ int s6ps_pwcache_init (void)
 void s6ps_pwcache_finish (void)
 {
   avltree_free(&pwcache_tree) ;
-  genalloc_free(diuint, &pwcache_index) ;
+  genalloc_free(dius_t, &pwcache_index) ;
 }
 
-int s6ps_pwcache_lookup (stralloc *sa, unsigned int uid)
+int s6ps_pwcache_lookup (stralloc *sa, uid_t uid)
 {
   int wasnull = !satmp.s ;
-  diuint d = { .left = uid, .right = satmp.len } ;
+  dius_t d = { .left = (unsigned int)uid, .right = satmp.len } ;
   unsigned int i ;
   if (!avltree_search(&pwcache_tree, &d.left, &i))
   {
     struct passwd *pw ;
-    unsigned int n = genalloc_len(diuint, &pwcache_index) ;
+    size_t n = genalloc_len(dius_t, &pwcache_index) ;
     errno = 0 ;
     pw = getpwuid(uid) ;
     if (!pw)
@@ -49,7 +48,7 @@ int s6ps_pwcache_lookup (stralloc *sa, unsigned int uid)
     if (!genalloc_append(diuint, &pwcache_index, &d)) goto err ;
     if (!avltree_insert(&pwcache_tree, n))
     {
-      genalloc_setlen(diuint, &pwcache_index, n) ;
+      genalloc_setlen(dius_t, &pwcache_index, n) ;
       goto err ;
     }
     i = n ;

@@ -4,7 +4,6 @@
 #include <grp.h>
 #include <errno.h>
 #include <skalibs/uint.h>
-#include <skalibs/diuint.h>
 #include <skalibs/stralloc.h>
 #include <skalibs/genalloc.h>
 #include <skalibs/skamisc.h>
@@ -23,18 +22,18 @@ int s6ps_grcache_init (void)
 void s6ps_grcache_finish (void)
 {
   avltree_free(&grcache_tree) ;
-  genalloc_free(diuint, &grcache_index) ;
+  genalloc_free(dius_t, &grcache_index) ;
 }
 
-int s6ps_grcache_lookup (stralloc *sa, unsigned int gid)
+int s6ps_grcache_lookup (stralloc *sa, gid_t gid)
 {
   int wasnull = !satmp.s ;
-  diuint d = { .left = gid, .right = satmp.len } ;
+  dius_t d = { .left = (unsigned int)gid, .right = satmp.len } ;
   unsigned int i ;
   if (!avltree_search(&grcache_tree, &d.left, &i))
   {
     struct group *gr ;
-    unsigned int n = genalloc_len(diuint, &grcache_index) ;
+    unsigned int n = genalloc_len(dius_t, &grcache_index) ;
     errno = 0 ;
     gr = getgrgid(gid) ;
     if (!gr)
@@ -46,15 +45,15 @@ int s6ps_grcache_lookup (stralloc *sa, unsigned int gid)
       stralloc_catb(&satmp, ")", 2) ;
     }
     else if (!stralloc_cats(&satmp, gr->gr_name) || !stralloc_0(&satmp)) return 0 ;
-    if (!genalloc_append(diuint, &grcache_index, &d)) goto err ;
+    if (!genalloc_append(dius_t, &grcache_index, &d)) goto err ;
     if (!avltree_insert(&grcache_tree, n))
     {
-      genalloc_setlen(diuint, &grcache_index, n) ;
+      genalloc_setlen(dius_t, &grcache_index, n) ;
       goto err ;
     }
     i = n ;
   }
-  return stralloc_cats(sa, satmp.s + genalloc_s(diuint, &grcache_index)[i].right) ;
+  return stralloc_cats(sa, satmp.s + genalloc_s(dius_t, &grcache_index)[i].right) ;
  err:
   {
     register int e = errno ;

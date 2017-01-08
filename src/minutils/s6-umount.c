@@ -1,5 +1,6 @@
 /* ISC license. */
 
+#include <sys/types.h>
 #include <sys/mount.h>
 #include <skalibs/bytestr.h>
 #include <skalibs/buffer.h>
@@ -28,7 +29,7 @@ static int umountall ( )
   buffer_init(&b, &buffer_read, fd, buf, BUFSIZE+1) ;
   for (;;)
   {
-    unsigned int n, p ;
+    size_t n, p ;
     if (line >= MAXLINES) strerr_dief1x(111, "/proc/mounts too big") ;
     sa.len = 0 ;
     r = skagetln(&b, &sa, '\n') ;
