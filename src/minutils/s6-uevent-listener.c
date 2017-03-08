@@ -11,7 +11,7 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <linux/netlink.h>
-#include <skalibs/uint.h>
+#include <skalibs/types.h>
 #include <skalibs/allreadwrite.h>
 #include <skalibs/siovec.h>
 #include <skalibs/buffer.h>
@@ -30,7 +30,7 @@
 #define BUFSIZE 8191
 
 static char buf1[BUFSIZE + 1] ;
-static buffer b1 = BUFFER_INIT(&fd_writesv, 1, buf1, BUFSIZE + 1) ;
+static buffer b1 = BUFFER_INIT(&fd_writev, 1, buf1, BUFSIZE + 1) ;
 static unsigned int cont = 1, verbosity = 1 ;
 static pid_t pid ;
 
@@ -98,22 +98,20 @@ static inline void handle_stdout (void)
 static inline void handle_netlink (void)
 {
   struct sockaddr_nl nl;
-  struct iovec iov[2] ;
+  struct iovec v[2] ;
   struct msghdr msg =
   {
     .msg_name = &nl,
     .msg_namelen = sizeof(struct sockaddr_nl),
-    .msg_iov = iov,
+    .msg_iov = v,
     .msg_iovlen = 2,
     .msg_control = 0,
     .msg_controllen = 0,
     .msg_flags = 0
   } ;
-  siovec_t v[2] ;
-  register ssize_t r ;
+  ssize_t r ;
   buffer_wpeek(&b1, v) ;
   siovec_trunc(v, 2, siovec_len(v, 2) - 1) ;
-  iovec_from_siovec(iov, v, 2) ;
   r = sanitize_read(fd_recvmsg(0, &msg)) ;
   if (r < 0)
   {
@@ -153,7 +151,7 @@ int main (int argc, char const *const *argv, char const *const *envp)
     subgetopt_t l = SUBGETOPT_ZERO ;
     for (;;)
     {
-      register int opt = subgetopt_r(argc, argv, "v:b:", &l) ;
+      int opt = subgetopt_r(argc, argv, "v:b:", &l) ;
       if (opt == -1) break ;
       switch (opt)
       {
@@ -190,7 +188,7 @@ int main (int argc, char const *const *argv, char const *const *envp)
 
   while (cont || buffer_len(buffer_1))
   {
-    register int r ;
+    int r ;
     x[1].events = buffer_len(&b1) ? IOPAUSE_WRITE : 0 ;
     x[2].events = buffer_available(&b1) >= MAXNLSIZE + 1 ? IOPAUSE_READ : 0 ;
     r = iopause(x, 2 + cont, 0, 0) ;

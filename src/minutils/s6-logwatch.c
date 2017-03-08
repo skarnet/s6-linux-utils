@@ -1,6 +1,7 @@
 /* ISC license. */
 
 #include <sys/types.h>
+#include <sys/uio.h>
 #include <errno.h>
 #include <unistd.h>
 #include <signal.h>
@@ -14,10 +15,9 @@
 #include <skalibs/buffer.h>
 #include <skalibs/bufalloc.h>
 #include <skalibs/sig.h>
-#include <skalibs/siovec.h>
 #include <skalibs/djbunix.h>
 #include <skalibs/iopause.h>
-#include <skalibs/ulong.h>
+#include <skalibs/types.h>
 
 #define USAGE "s6-logwatch [ -m maxbuffer ] logdir"
 #define dieusage() strerr_dieusage(100, USAGE)
@@ -40,8 +40,8 @@ static void X (void)
 static size_t nbcat (int fdcurrent)
 {
   char buf[N+1] ;
-  buffer b = BUFFER_INIT(&buffer_read, fdcurrent, buf, N+1) ;
-  siovec_t v[2] ;
+  buffer b = BUFFER_INIT(&fd_readv, fdcurrent, buf, N+1) ;
+  struct iovec v[2] ;
   size_t bytes = 0 ;
   for (;;)
   {
@@ -71,7 +71,7 @@ int main (int argc, char const *const *argv)
     subgetopt_t l = SUBGETOPT_ZERO ;
     for (;;)
     {
-      register int opt = subgetopt_r(argc, argv, "m:", &l) ;
+      int opt = subgetopt_r(argc, argv, "m:", &l) ;
       if (opt == -1) break ;
       switch (opt)
       {

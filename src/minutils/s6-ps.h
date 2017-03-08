@@ -84,18 +84,18 @@ struct pscan_s
   pid_t session ;
   dev_t ttynr ;
   pid_t tpgid ;
-  uint64 utime ;
-  uint64 stime ;
-  uint64 cutime ;
-  uint64 cstime ;
+  uint64_t utime ;
+  uint64_t stime ;
+  uint64_t cutime ;
+  uint64_t cstime ;
   int prio ;
   int nice ;
-  uint32 threads ;
-  uint64 start ;
-  uint64 vsize ;
-  uint64 rss ;
-  uint64 rsslim ;
-  uint64 wchan ;
+  uint32_t threads ;
+  uint64_t start ;
+  uint64_t vsize ;
+  uint64_t rss ;
+  uint64_t rsslim ;
+  uint64_t wchan ;
   uint32_t cpuno ;
   uint32_t rtprio ;
   uint32_t policy ;
@@ -158,6 +158,6 @@ extern void s6ps_ttycache_finish (void) ;
 extern int s6ps_ttycache_lookup (stralloc *, dev_t) ;
 extern int s6ps_wchan_init (char const *) ;
 extern void s6ps_wchan_finish (void) ;
-extern int s6ps_wchan_lookup (stralloc *, uint64) ;
+extern int s6ps_wchan_lookup (stralloc *, uint64_t) ;
 
 #endif

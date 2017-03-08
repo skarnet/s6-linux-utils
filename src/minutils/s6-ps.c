@@ -9,8 +9,8 @@
 #include <pwd.h>
 #include <dirent.h>
 
-#include <skalibs/uint.h>
 #include <skalibs/uint64.h>
+#include <skalibs/types.h>
 #include <skalibs/fmtscan.h>
 #include <skalibs/sgetopt.h>
 #include <skalibs/bytestr.h>
@@ -54,8 +54,8 @@ void *left_dtok (unsigned int d, void *x)
 
 int uint_cmp (void const *a, void const *b, void *x)
 {
-  register unsigned int aa = *(unsigned int *)a ;
-  register unsigned int bb = *(unsigned int *)b ;
+  unsigned int aa = *(unsigned int *)a ;
+  unsigned int bb = *(unsigned int *)b ;
   (void)x ;
   return (aa < bb) ? -1 : (aa > bb) ;
 }
@@ -74,22 +74,22 @@ static int fillo_notree (unsigned int i, unsigned int h, void *x)
   return 1 ;
 }
 
-static inline unsigned int fieldscan (char const *s, pfield_t *list, uint64 *fbf)
+static inline unsigned int fieldscan (char const *s, pfield_t *list, uint64_t *fbf)
 {
-  uint64 bits = 0 ;
+  uint64_t bits = 0 ;
   unsigned int n = 0 ;
   int cont = 1 ;
   for (; cont ; n++)
   {
     size_t len = str_chr(s, ',') ;
-    register pfield_t i = 0 ;
+    pfield_t i = 0 ;
     if (!len) strerr_dief3x(100, "invalid", " (empty)", " field for -o option") ;
     if (!s[len]) cont = 0 ;
     {
       char tmp[len+1] ;
-      byte_copy(tmp, len, s) ;
+      memcpy(tmp, s, len) ;
       tmp[len] = 0 ;
-      for (; i < PFIELD_PHAIL ; i++) if (!str_diff(tmp, s6ps_opttable[i])) break ;
+      for (; i < PFIELD_PHAIL ; i++) if (!strcmp(tmp, s6ps_opttable[i])) break ;
       if (i >= PFIELD_PHAIL)
         strerr_dief4x(100, "invalid", " field for -o option", ": ", tmp) ;
       if (bits & (1 << i))
@@ -118,7 +118,7 @@ int main (int argc, char const *const *argv)
 {
   genalloc pscans = GENALLOC_ZERO ; /* array of pscan_t */
   pfield_t fieldlist[PFIELD_PHAIL] = { PFIELD_USER, PFIELD_PID, PFIELD_TTY, PFIELD_STATE, PFIELD_START, PFIELD_ARGS } ;
-  uint64 fbf = (1 << PFIELD_USER) | (1 << PFIELD_PID) | (1 << PFIELD_TTY) | (1 << PFIELD_STATE) | (1 << PFIELD_START) | (1 << PFIELD_ARGS) ;
+  uint64_t fbf = (1 << PFIELD_USER) | (1 << PFIELD_PID) | (1 << PFIELD_TTY) | (1 << PFIELD_STATE) | (1 << PFIELD_START) | (1 << PFIELD_ARGS) ;
   size_t mypos = 0 ;
   unsigned int nfields = 6 ;
   pscan_t *p ;
@@ -133,7 +133,7 @@ int main (int argc, char const *const *argv)
     subgetopt_t l = SUBGETOPT_ZERO ;
     for (;;)
     {
-      register int opt = subgetopt_r(argc, argv, "Hlw:W:o:", &l) ;
+      int opt = subgetopt_r(argc, argv, "Hlw:W:o:", &l) ;
       if (opt == -1) break ;
       switch (opt)
       {
@@ -220,7 +220,7 @@ int main (int argc, char const *const *argv)
     for (;;)
     {
       pscan_t pscan = PSCAN_ZERO ;
-      uint64 u ;
+      uint64_t u ;
       int dirfd ;
       errno = 0 ;
       d = readdir(dir) ;
@@ -280,7 +280,7 @@ int main (int argc, char const *const *argv)
 
   {
     unsigned int orderedlist[n+1] ; /* 1st element will be 0, ignored */
-    register unsigned int i = 0 ;
+    unsigned int i = 0 ;
 
     /* Order the processes for display */
 
@@ -326,10 +326,10 @@ int main (int argc, char const *const *argv)
       size_t fmtlen[n][nfields] ;
       size_t maxlen[nfields] ;
       unsigned int maxspaces = 0 ;
-      for (i = 0 ; i < nfields ; i++) maxlen[i] = str_len(s6ps_fieldheaders[fieldlist[i]]) ;
+      for (i = 0 ; i < nfields ; i++) maxlen[i] = strlen(s6ps_fieldheaders[fieldlist[i]]) ;
       for (i = 0 ; i < n ; i++)
       {
-        register unsigned int j = 0 ;
+        unsigned int j = 0 ;
         for (; j < nfields ; j++)
         {
           if (!(*s6ps_pfield_fmt[fieldlist[j]])(p+i, &fmtpos[i][j], &fmtlen[i][j]))
@@ -350,8 +350,8 @@ int main (int argc, char const *const *argv)
         for (i = 0 ; i < maxspaces ; i++) spaces[i] = ' ' ;
         for (i = 0 ; i < nfields ; i++)
         {
-          register unsigned int rightformatted = !!(((uint64)1 << fieldlist[i]) & RIGHTFORMATTED) ;
-          register size_t len = str_len(s6ps_fieldheaders[fieldlist[i]]) ;
+          unsigned int rightformatted = !!(((uint64_t)1 << fieldlist[i]) & RIGHTFORMATTED) ;
+          size_t len = strlen(s6ps_fieldheaders[fieldlist[i]]) ;
           if (rightformatted && (buffer_put(buffer_1, spaces, maxlen[i] - len) < (int)(maxlen[i] - len)))
             goto nowrite ;
           if (buffer_put(buffer_1, s6ps_fieldheaders[fieldlist[i]], len) < (int)len)
@@ -362,11 +362,11 @@ int main (int argc, char const *const *argv)
         if (buffer_put(buffer_1, "\n", 1) < 1) goto nowrite ;
         for (i = 0 ; i < n ; i++)
         {
-          register unsigned int oi = orderedlist[i+1] ;
-          register unsigned int j = 0 ;
+          unsigned int oi = orderedlist[i+1] ;
+          unsigned int j = 0 ;
           for (; j < nfields ; j++)
           {
-            register unsigned int rightformatted = !!(((uint64)1 << fieldlist[j]) & RIGHTFORMATTED) ;
+            unsigned int rightformatted = !!(((uint64_t)1 << fieldlist[j]) & RIGHTFORMATTED) ;
             if (rightformatted && (buffer_put(buffer_1, spaces, maxlen[j] - fmtlen[oi][j]) < (int)(maxlen[j] - fmtlen[oi][j])))
               goto nowrite ;
             if (buffer_put(buffer_1, p[oi].data.s + fmtpos[oi][j], fmtlen[oi][j]) < (int)fmtlen[oi][j])

@@ -1,10 +1,10 @@
 /* ISC license. */
 
+#include <stdint.h>
 #include <sys/types.h>
 #include <errno.h>
-#include <skalibs/uint32.h>
 #include <skalibs/uint64.h>
-#include <skalibs/fmtscan.h>
+#include <skalibs/types.h>
 #include <skalibs/stralloc.h>
 #include <skalibs/tai.h>
 #include "s6-ps.h"
@@ -21,13 +21,13 @@ typedef scanfunc_t *scanfunc_t_ref ;
 
 static size_t f32 (char const *s, void *u32)
 {
-  uint32 *u = u32 ;
+  uint32_t *u = u32 ;
   return uint32_scan(s, u) ;
 }
 
 static size_t f64 (char const *s, void *u64)
 {
-  uint64 *u = u64 ;
+  uint64_t *u = u64 ;
   return uint64_scan(s, u) ;
 }
 
@@ -39,18 +39,14 @@ static size_t fint (char const *s, void *i)
 
 static size_t fpid (char const *s, void *p)
 {
-  uint64 u ;
-  register size_t l = uint64_scan(s, &u) ;
-  *(pid_t *)p = u ;
-  return l ;
+  pid_t *pid = p ;
+  return pid_scan(s, pid) ;
 }
 
 static size_t fdev (char const *s, void *p)
 {
-  uint64 u ;
-  register size_t l = uint64_scan(s, &u) ;
-  *(dev_t *)p = u ;
-  return l ;
+  dev_t *d = p ;
+  return dev_scan(s, d) ;
 }
 
 static scanfunc_t_ref scanfuncs[STATVARS] =
@@ -100,8 +96,8 @@ static scanfunc_t_ref scanfuncs[STATVARS] =
 
 int s6ps_statparse (pscan_t *p)
 {
-  uint64 dummy64 ;
-  uint32 dummy32 ;
+  uint64_t dummy64 ;
+  uint32_t dummy32 ;
   size_t pos = 0 ;
   void *scanresults[STATVARS] =
   {
@@ -147,7 +143,7 @@ int s6ps_statparse (pscan_t *p)
     &dummy32,
     &dummy32
   } ;
-  register unsigned int i = 0 ;
+  unsigned int i = 0 ;
 
   if (!p->statlen) return 0 ;
   pos = uint32_scan(p->data.s, &dummy32) ;

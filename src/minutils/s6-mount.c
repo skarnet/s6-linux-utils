@@ -1,11 +1,12 @@
 /* ISC license. */
 
+#include <string.h>
 #include <errno.h>
 #include <sys/mount.h>
 #include <mntent.h>
 #include <stdio.h>
-#include <skalibs/sgetopt.h>
 #include <skalibs/bytestr.h>
+#include <skalibs/sgetopt.h>
 #include <skalibs/strerr2.h>
 #include <skalibs/stralloc.h>
 #include <skalibs/djbunix.h>
@@ -16,14 +17,13 @@
 
 #define SWITCH(opt) do
 #define HCTIWS(opt) while(0) ;
-#define CASE(s) if (n == sizeof(s) - 1 && !str_diffn(opt, (s), n))
+#define CASE(s) if (n == sizeof(s) - 1 && !strncmp(opt, (s), n))
 
 static void scanopt (stralloc *data, unsigned long *flags, char const *opt)
 {
   for (;;)
   {
-    register unsigned int n = str_chr(opt, ',') ;
-
+    unsigned int n = str_chr(opt, ',') ;
     SWITCH(opt)
     {
       CASE("defaults") { *flags = MS_MGC_VAL ; break ; }
@@ -98,7 +98,7 @@ int main (int argc, char const *const *argv)
     subgetopt_t l = SUBGETOPT_ZERO ;
     for (;;)
     {
-      register int opt = subgetopt_r(argc, argv, "nz:arwt:o:", &l) ;
+      int opt = subgetopt_r(argc, argv, "nz:arwt:o:", &l) ;
       if (opt == -1) break ;
       switch (opt)
       {

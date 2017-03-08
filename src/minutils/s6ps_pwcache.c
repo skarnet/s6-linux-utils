@@ -3,7 +3,7 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <errno.h>
-#include <skalibs/uint.h>
+#include <skalibs/types.h>
 #include <skalibs/stralloc.h>
 #include <skalibs/genalloc.h>
 #include <skalibs/skamisc.h>
@@ -33,7 +33,7 @@ int s6ps_pwcache_lookup (stralloc *sa, uid_t uid)
   if (!avltree_search(&pwcache_tree, &d.left, &i))
   {
     struct passwd *pw ;
-    size_t n = genalloc_len(dius_t, &pwcache_index) ;
+    unsigned int n = genalloc_len(dius_t, &pwcache_index) ;
     errno = 0 ;
     pw = getpwuid(uid) ;
     if (!pw)
@@ -45,7 +45,7 @@ int s6ps_pwcache_lookup (stralloc *sa, uid_t uid)
       stralloc_catb(&satmp, ")", 2) ;
     }
     else if (!stralloc_cats(&satmp, pw->pw_name) || !stralloc_0(&satmp)) return 0 ;
-    if (!genalloc_append(diuint, &pwcache_index, &d)) goto err ;
+    if (!genalloc_append(dius_t, &pwcache_index, &d)) goto err ;
     if (!avltree_insert(&pwcache_tree, n))
     {
       genalloc_setlen(dius_t, &pwcache_index, n) ;
@@ -53,10 +53,10 @@ int s6ps_pwcache_lookup (stralloc *sa, uid_t uid)
     }
     i = n ;
   }
-  return stralloc_cats(sa, satmp.s + genalloc_s(diuint, &pwcache_index)[i].right) ;
+  return stralloc_cats(sa, satmp.s + genalloc_s(dius_t, &pwcache_index)[i].right) ;
  err:
   {
-    register int e = errno ;
+    int e = errno ;
     if (wasnull) stralloc_free(&satmp) ;
     else satmp.len = d.right ;
     errno = e ;

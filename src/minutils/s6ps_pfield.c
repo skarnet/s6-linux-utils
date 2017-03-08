@@ -1,14 +1,13 @@
 /* ISC license. */
 
+#include <stdint.h>
 #include <unistd.h>
 #include <time.h>
 #include <sys/sysinfo.h>
-#include <skalibs/uint32.h>
 #include <skalibs/uint64.h>
+#include <skalibs/types.h>
 #include <skalibs/bytestr.h>
 #include <skalibs/strerr2.h>
-#include <skalibs/ulong.h>
-#include <skalibs/fmtscan.h>
 #include <skalibs/tai.h>
 #include <skalibs/djbtime.h>
 #include <skalibs/stralloc.h>
@@ -94,7 +93,7 @@ char const *const *s6ps_opttable = opttable ;
 
 static tain_t boottime = TAIN_EPOCH ;
 
-static int fmt_32 (pscan_t *p, size_t *pos, size_t *len, uint32 u)
+static int fmt_32 (pscan_t *p, size_t *pos, size_t *len, uint32_t u)
 {
   if (!stralloc_readyplus(&p->data, UINT32_FMT)) return 0 ;
   *pos = p->data.len ;
@@ -103,7 +102,7 @@ static int fmt_32 (pscan_t *p, size_t *pos, size_t *len, uint32 u)
   return 1 ;
 }
 
-static int fmt_64 (pscan_t *p, size_t *pos, size_t *len, uint64 u)
+static int fmt_64 (pscan_t *p, size_t *pos, size_t *len, uint64_t u)
 {                                                          
   if (!stralloc_readyplus(&p->data, UINT64_FMT)) return 0 ;
   *pos = p->data.len ;
@@ -220,10 +219,10 @@ int s6ps_compute_boottime (pscan_t *p, unsigned int mypos)
   }
 }
 
-static int fmt_jiffies (pscan_t *p, size_t *pos, size_t *len, uint64 j)
+static int fmt_jiffies (pscan_t *p, size_t *pos, size_t *len, uint64_t j)
 {
   unsigned int hz = gethz() ;
-  uint32 hrs, mins, secs, hfrac ;
+  uint32_t hrs, mins, secs, hfrac ;
   if (!stralloc_readyplus(&p->data, UINT64_FMT + 13)) return 0 ;
   hfrac = (j % hz) * 100 / hz ;
   *pos = p->data.len ;
@@ -441,7 +440,7 @@ static int fmt_args (pscan_t *p, size_t *pos, size_t *len)
   *pos = p->data.len ;
   if (p->height)
   {
-    register unsigned int i = 0 ;
+    unsigned int i = 0 ;
     for (; i < 4 * (unsigned int)p->height - 3 ; i++)
       p->data.s[p->data.len + i] = ' ' ;
     byte_copy(p->data.s + p->data.len + 4 * p->height - 3, 3, "\\_ ") ;
@@ -449,12 +448,12 @@ static int fmt_args (pscan_t *p, size_t *pos, size_t *len)
   }
   if (p->cmdlen)
   {
-    register char const *r = p->data.s + p->statlen + p->commlen ;
-    register char *w = p->data.s + p->data.len ;
-    register size_t i = p->cmdlen ;
+    char const *r = p->data.s + p->statlen + p->commlen ;
+    char *w = p->data.s + p->data.len ;
+    size_t i = p->cmdlen ;
     while (i--)
     {
-      register char c = *r++ ;
+      char c = *r++ ;
       *w++ = c ? c : ' ' ;
     }
     p->data.len += p->cmdlen ;
@@ -472,7 +471,7 @@ static int fmt_args (pscan_t *p, size_t *pos, size_t *len)
 
 static int fmt_env (pscan_t *p, size_t *pos, size_t *len)
 {
-  register size_t i = 0 ;
+  size_t i = 0 ;
   if (!p->envlen)
   {
     if (!stralloc_catb(&p->data, "*", 1)) return 0 ;
@@ -487,10 +486,10 @@ static int fmt_env (pscan_t *p, size_t *pos, size_t *len)
   return 1 ;
 }
 
-static uint64 gettotalj (uint64 j)
+static uint64_t gettotalj (uint64_t j)
 {
   tain_t totaltime ;
-  register unsigned int hz = gethz() ;
+  unsigned int hz = gethz() ;
   tain_sub(&totaltime, &STAMP, &boottime) ;
   j = totaltime.sec.x * hz + totaltime.nano / (1000000000 / hz) - j ;
   if (!j) j = 1 ;

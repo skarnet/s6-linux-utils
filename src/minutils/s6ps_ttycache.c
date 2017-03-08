@@ -4,11 +4,11 @@
 #define _BSD_SOURCE
 #endif
 
-#include <sys/types.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include <skalibs/bytestr.h>
-#include <skalibs/uint.h>
+#include <skalibs/types.h>
+#include <skalibs/allreadwrite.h>
 #include <skalibs/buffer.h>
 #include <skalibs/stralloc.h>
 #include <skalibs/genalloc.h>
@@ -55,8 +55,8 @@ static int ttyguess (stralloc *sa, dev_t ttynr)
   }
   else if (maj >= 136 && maj < 144)
   {
+    unsigned int n = ((maj - 136) << 20) | min ;
     char tmp[9 + UINT_FMT] = "/dev/pts/" ;
-    register unsigned int n = ((maj - 136) << 20) | min ;
     tmp[9 + uint_fmt(tmp+9, n)] = 0 ;
     if (check(tmp, ttynr)) return stralloc_cats(sa, tmp+5) && stralloc_0(sa) ;
   }
@@ -64,32 +64,32 @@ static int ttyguess (stralloc *sa, dev_t ttynr)
  /* Use /sys/dev/char/maj:min if it exists */
   {
     int fd ;
+    size_t pos = 14 ;
     char path[23 + 2 * UINT_FMT] = "/sys/dev/char/" ;
-    register size_t pos = 14 ;
     pos += uint_fmt(path + pos, maj) ;
     path[pos++] = ':' ;
     pos += uint_fmt(path + pos, min) ;
-    byte_copy(path + pos, 8, "/uevent") ;
+    memcpy(path + pos, "/uevent", 8) ;
     fd = open_read(path) ;
     if (fd >= 0)
     {
       char buf[4097] ;
-      buffer b = BUFFER_INIT(&buffer_read, fd, buf, 4097) ;
+      buffer b = BUFFER_INIT(&fd_readv, fd, buf, 4097) ;
       size_t start = satmp.len ;
-      register int r ;
+      int r ;
       for (;;)
       {
         satmp.len = start ;
         r = skagetln(&b, &satmp, '\n') ;
         if (r <= 0) break ;
-        if ((satmp.len - start) > 8 && !byte_diff(satmp.s + start, 8, "DEVNAME=")) break ;
+        if ((satmp.len - start) > 8 && !memcmp(satmp.s + start, "DEVNAME=", 8)) break ;
       }
       fd_close(fd) ;
       if (r > 0)
       {
         satmp.s[satmp.len - 1] = 0 ;
         satmp.len = start ;
-        byte_copy(satmp.s + start + 3, 5, "/dev/") ;
+        memcpy(satmp.s + start + 3, "/dev/", 5) ;
         if (check(satmp.s + start + 3, ttynr))
           return stralloc_cats(sa, satmp.s + start + 8) && stralloc_0(sa) ;
       }
@@ -98,8 +98,8 @@ static int ttyguess (stralloc *sa, dev_t ttynr)
 
  /* Fallback: print explicit maj:min */
   {
+    size_t pos = 1 ;
     char tmp[3 + 2 * UINT_FMT] = "(" ;
-    register size_t pos = 1 ;
     pos += uint_fmt(tmp + pos, maj) ;
     tmp[pos++] = ':' ;
     pos += uint_fmt(tmp + pos, min) ;
@@ -116,7 +116,7 @@ int s6ps_ttycache_lookup (stralloc *sa, dev_t ttynr)
   unsigned int i ;
   if (!avltree_search(&ttycache_tree, &d.left, &i))
   {
-    size_t n = genalloc_len(dius_t, &ttycache_index) ;
+    unsigned int n = genalloc_len(dius_t, &ttycache_index) ;
     if (!ttyguess(&satmp, ttynr)) return 0 ;
     if (!genalloc_append(dius_t, &ttycache_index, &d)) goto err ;
     if (!avltree_insert(&ttycache_tree, n))
@@ -129,7 +129,7 @@ int s6ps_ttycache_lookup (stralloc *sa, dev_t ttynr)
   return stralloc_cats(sa, satmp.s + genalloc_s(dius_t, &ttycache_index)[i].right) ;
  err:
   {
-    register int e = errno ;
+    int e = errno ;
     if (wasnull) stralloc_free(&satmp) ;
     else satmp.len = d.right ;
     errno = e ;

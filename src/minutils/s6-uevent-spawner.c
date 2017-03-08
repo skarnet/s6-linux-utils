@@ -1,6 +1,6 @@
 /* ISC license. */
 
-#include <sys/types.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -10,9 +10,9 @@
 #include <stdlib.h>
 #include <skalibs/config.h>
 #include <skalibs/allreadwrite.h>
-#include <skalibs/buffer.h>
 #include <skalibs/bytestr.h>
-#include <skalibs/uint.h>
+#include <skalibs/buffer.h>
+#include <skalibs/types.h>
 #include <skalibs/sgetopt.h>
 #include <skalibs/strerr2.h>
 #include <skalibs/tai.h>
@@ -135,7 +135,7 @@ static inline void handle_stdin (stralloc *sa, char const *linevar, char const *
   while (!pid)
   {
     size_t start ;
-    register ssize_t r ;
+    ssize_t r ;
     if (!sa->len && linevar)
       if (!stralloc_cats(sa, linevar) || !stralloc_catb(sa, "=", 1))
         dienomem() ;
@@ -149,7 +149,7 @@ static inline void handle_stdin (stralloc *sa, char const *linevar, char const *
     if (r <= 0) break ;
     if (sa->len == start + 1)
     {
-      start = linevar ? 0 : str_len(sa->s) + 1 ;
+      start = linevar ? 0 : strlen(sa->s) + 1 ;
       if (start >= sa->len)
       {
         if (verbosity) strerr_warnw1x("read an empty event!") ;
@@ -191,7 +191,7 @@ int main (int argc, char const *const *argv, char const *const *envp)
     subgetopt_t l = SUBGETOPT_ZERO ;
     for (;;)
     {
-      register int opt = subgetopt_r(argc, argv, "l:v:t:", &l) ;
+      int opt = subgetopt_r(argc, argv, "l:v:t:", &l) ;
       if (opt == -1) break ;
       switch (opt)
       {
@@ -204,7 +204,7 @@ int main (int argc, char const *const *argv, char const *const *envp)
     argc -= l.ind ; argv += l.ind ;
     if (!argc) strerr_dieusage(100, USAGE) ;
   }
-  if (linevar && linevar[str_chr(linevar, '=')])
+  if (linevar && strchr(linevar, '='))
     strerr_dief2x(100, "invalid variable: ", linevar) ;
 
   if (ndelay_on(0) < 0) strerr_diefu1sys(111, "set stdin nonblocking") ;
@@ -221,7 +221,7 @@ int main (int argc, char const *const *argv, char const *const *envp)
 
   while (cont || pid)
   {
-    register int r ;
+    int r ;
     if (buffer_len(buffer_0))
       handle_stdin(&sa, linevar, argv, envp) ;
     r = iopause_g(x, 1 + (!pid && cont), &deadline) ;

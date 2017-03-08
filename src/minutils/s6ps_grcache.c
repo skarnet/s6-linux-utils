@@ -1,9 +1,8 @@
 /* ISC license. */
 
-#include <sys/types.h>
 #include <grp.h>
 #include <errno.h>
-#include <skalibs/uint.h>
+#include <skalibs/types.h>
 #include <skalibs/stralloc.h>
 #include <skalibs/genalloc.h>
 #include <skalibs/skamisc.h>
@@ -56,7 +55,7 @@ int s6ps_grcache_lookup (stralloc *sa, gid_t gid)
   return stralloc_cats(sa, satmp.s + genalloc_s(dius_t, &grcache_index)[i].right) ;
  err:
   {
-    register int e = errno ;
+    int e = errno ;
     if (wasnull) stralloc_free(&satmp) ;
     else satmp.len = d.right ;
     errno = e ;

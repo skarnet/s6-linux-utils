@@ -4,8 +4,6 @@
 #include <skalibs/avltreen.h>
 #include "s6-ps.h"
 
-/* XXX: need to change all the types if the libdatastruct API changes */
-
 typedef struct ptreeiter_s ptreeiter_t, *ptreeiter_t_ref ;
 struct ptreeiter_s
 {
@@ -27,8 +25,8 @@ struct pstuff_s
 
 static int fillchildlist (unsigned int i, unsigned int h, void *x)
 {
-  register ptreeiter_t *pt = x ;
-  register unsigned int j = pt->ppindex[i] ;
+  ptreeiter_t *pt = x ;
+  unsigned int j = pt->ppindex[i] ;
   pt->childlist[pt->childindex[j] + pt->cpos[j]++] = i ;
   (void)h ;
   return 1 ;
@@ -37,7 +35,7 @@ static int fillchildlist (unsigned int i, unsigned int h, void *x)
 static void fillo_tree_rec (pstuff_t *blah, unsigned int root, signed int h)
 {
   static unsigned int j = 0 ;
-  register unsigned int i = !blah->p[root].pid ;
+  unsigned int i = !blah->p[root].pid ;
   if (blah->p[root].pid == 1) h = -1 ;
   blah->p[root].height = (h > 0) ? h : 0 ;
   blah->orderedlist[j++] = root ;
@@ -55,7 +53,7 @@ void s6ps_otree (pscan_t *p, unsigned int n, avltreen *pidtree, unsigned int *or
   unsigned int childlist[n] ;
   unsigned int childindex[n] ;
   unsigned int nchild[n] ;
-  register unsigned int i = 0 ;
+  unsigned int i = 0 ;
   for (; i < n ; i++) nchild[i] = 0 ;
 
  /* Compute the ppid tree */
