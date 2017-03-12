@@ -5,7 +5,7 @@
 #endif
 
 #include <unistd.h>
-#include <skalibs/bytestr.h>
+#include <string.h>
 #include <skalibs/allreadwrite.h>
 #include <skalibs/strerr2.h>
 #include <skalibs/stralloc.h>
@@ -25,7 +25,7 @@ static int getit (void)
 
 static int setit (char const *h)
 {
-  if (sethostname(h, str_len(h)) < 0)
+  if (sethostname(h, strlen(h)) < 0)
     strerr_diefu1sys(111, "set hostname") ;
   return 0 ;
 }

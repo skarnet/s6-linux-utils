@@ -1,12 +1,12 @@
 /* ISC license. */
 
+#include <string.h>
 #include <stdint.h>
 #include <unistd.h>
 #include <time.h>
 #include <sys/sysinfo.h>
 #include <skalibs/uint64.h>
 #include <skalibs/types.h>
-#include <skalibs/bytestr.h>
 #include <skalibs/strerr2.h>
 #include <skalibs/tai.h>
 #include <skalibs/djbtime.h>
@@ -443,7 +443,7 @@ static int fmt_args (pscan_t *p, size_t *pos, size_t *len)
     unsigned int i = 0 ;
     for (; i < 4 * (unsigned int)p->height - 3 ; i++)
       p->data.s[p->data.len + i] = ' ' ;
-    byte_copy(p->data.s + p->data.len + 4 * p->height - 3, 3, "\\_ ") ;
+    memcpy(p->data.s + p->data.len + 4 * p->height - 3, "\\_ ", 3) ;
     p->data.len += p->height << 2 ;
   }
   if (p->cmdlen)

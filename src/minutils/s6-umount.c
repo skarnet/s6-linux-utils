@@ -1,6 +1,6 @@
 /* ISC license. */
 
-#include <sys/types.h>
+#include <string.h>
 #include <sys/mount.h>
 #include <skalibs/bytestr.h>
 #include <skalibs/buffer.h>
@@ -25,7 +25,7 @@ static int umountall ( )
   int r ;
   int fd = open_readb("/proc/mounts") ;
   if (fd < 0) strerr_diefu1sys(111, "open /proc/mounts") ;
-  byte_zero(mountpoints, sizeof(mountpoints)) ;
+  memset(mountpoints, 0, sizeof(mountpoints)) ;
   buffer_init(&b, &buffer_read, fd, buf, BUFSIZE+1) ;
   for (;;)
   {

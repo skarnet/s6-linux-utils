@@ -352,11 +352,11 @@ int main (int argc, char const *const *argv)
         {
           unsigned int rightformatted = !!(((uint64_t)1 << fieldlist[i]) & RIGHTFORMATTED) ;
           size_t len = strlen(s6ps_fieldheaders[fieldlist[i]]) ;
-          if (rightformatted && (buffer_put(buffer_1, spaces, maxlen[i] - len) < (int)(maxlen[i] - len)))
+          if (rightformatted && (buffer_put(buffer_1, spaces, maxlen[i] - len) < (ssize_t)(maxlen[i] - len)))
             goto nowrite ;
-          if (buffer_put(buffer_1, s6ps_fieldheaders[fieldlist[i]], len) < (int)len)
+          if (buffer_put(buffer_1, s6ps_fieldheaders[fieldlist[i]], len) < (ssize_t)len)
             goto nowrite ;
-          if ((i < nfields-1) && (buffer_put(buffer_1, spaces, !rightformatted * (maxlen[i] - len) + spacing) < (int)(!rightformatted * (maxlen[i] - len) + spacing)))
+          if ((i < nfields-1) && (buffer_put(buffer_1, spaces, !rightformatted * (maxlen[i] - len) + spacing) < (ssize_t)(!rightformatted * (maxlen[i] - len) + spacing)))
             goto nowrite ;
         }
         if (buffer_put(buffer_1, "\n", 1) < 1) goto nowrite ;
@@ -367,11 +367,11 @@ int main (int argc, char const *const *argv)
           for (; j < nfields ; j++)
           {
             unsigned int rightformatted = !!(((uint64_t)1 << fieldlist[j]) & RIGHTFORMATTED) ;
-            if (rightformatted && (buffer_put(buffer_1, spaces, maxlen[j] - fmtlen[oi][j]) < (int)(maxlen[j] - fmtlen[oi][j])))
+            if (rightformatted && (buffer_put(buffer_1, spaces, maxlen[j] - fmtlen[oi][j]) < (ssize_t)(maxlen[j] - fmtlen[oi][j])))
               goto nowrite ;
-            if (buffer_put(buffer_1, p[oi].data.s + fmtpos[oi][j], fmtlen[oi][j]) < (int)fmtlen[oi][j])
+            if (buffer_put(buffer_1, p[oi].data.s + fmtpos[oi][j], fmtlen[oi][j]) < (ssize_t)fmtlen[oi][j])
               goto nowrite ;
-            if ((j < nfields-1) && (buffer_put(buffer_1, spaces, !rightformatted * (maxlen[j] - fmtlen[oi][j]) + spacing) < (int)(!rightformatted * (maxlen[j] - fmtlen[oi][j]) + spacing)))
+            if ((j < nfields-1) && (buffer_put(buffer_1, spaces, !rightformatted * (maxlen[j] - fmtlen[oi][j]) + spacing) < (ssize_t)(!rightformatted * (maxlen[j] - fmtlen[oi][j]) + spacing)))
               goto nowrite ;
           }
           if (buffer_put(buffer_1, "\n", 1) < 1) goto nowrite ;

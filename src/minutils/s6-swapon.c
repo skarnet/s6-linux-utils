@@ -1,11 +1,11 @@
 /* ISC license. */
 
+#include <unistd.h>
+#include <sys/swap.h>
+#include <string.h>
 #include <stdio.h>
 #include <mntent.h>
-#include <skalibs/bytestr.h>
 #include <skalibs/strerr2.h>
-
-extern int swapon (const char *, unsigned int) ;
 
 #define USAGE "s6-swapon device <or> s6-swapon -a"
 
@@ -16,7 +16,7 @@ static int swaponall ()
   FILE *yuck = setmntent("/etc/fstab", "r") ;
   if (!yuck) strerr_diefu1sys(111, "setmntent /etc/fstab") ;
   while ((d = getmntent(yuck)))
-    if (!str_diff(d->mnt_type, "swap") && (swapon(d->mnt_fsname, 0) == -1))
+    if (!strcmp(d->mnt_type, "swap") && (swapon(d->mnt_fsname, 0) == -1))
     {
       e++ ;
       strerr_warnwu2sys("swapon ", d->mnt_fsname) ;

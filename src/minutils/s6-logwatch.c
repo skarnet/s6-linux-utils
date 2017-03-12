@@ -1,15 +1,14 @@
 /* ISC license. */
 
-#include <sys/types.h>
 #include <sys/uio.h>
 #include <errno.h>
+#include <string.h>
 #include <unistd.h>
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <sys/inotify.h>
 #include <skalibs/allreadwrite.h>
 #include <skalibs/sgetopt.h>
-#include <skalibs/bytestr.h>
 #include <skalibs/strerr2.h>
 #include <skalibs/error.h>
 #include <skalibs/buffer.h>
@@ -120,7 +119,7 @@ int main (int argc, char const *const *argv)
           while (i < (size_t)r)
           {
             struct inotify_event *ie = (struct inotify_event *)(iebuf + i) ;
-            if ((ie->wd != w) || !ie->len || str_diff(ie->name, "current")) goto cont ;
+            if ((ie->wd != w) || !ie->len || strcmp(ie->name, "current")) goto cont ;
             if (ie->mask & IN_MODIFY)
             {
               if (state) X() ;

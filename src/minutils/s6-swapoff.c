@@ -1,6 +1,8 @@
 /* ISC license. */
 
+#include <unistd.h>
 #include <sys/types.h>
+#include <sys/swap.h>
 #include <errno.h>
 #include <skalibs/bytestr.h>
 #include <skalibs/buffer.h>
@@ -8,8 +10,6 @@
 #include <skalibs/stralloc.h>
 #include <skalibs/djbunix.h>
 #include <skalibs/skamisc.h>
-
-extern int swapoff (char const *) ;
 
 #define USAGE "s6-swapoff device <or> s6-swapoff -a"
 
