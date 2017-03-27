@@ -1,5 +1,6 @@
 /* ISC license. */
 
+#include <stdint.h>
 #include <grp.h>
 #include <errno.h>
 #include <skalibs/types.h>
@@ -14,7 +15,7 @@ static genalloc grcache_index = GENALLOC_ZERO ;
 
 int s6ps_grcache_init (void)
 {
-  avltree_init(&grcache_tree, 5, 3, 8, &left_dtok, &uint_cmp, &grcache_index) ;
+  avltree_init(&grcache_tree, 5, 3, 8, &left_dtok, &uint32_cmp, &grcache_index) ;
   return 1 ;
 }
 
@@ -27,8 +28,8 @@ void s6ps_grcache_finish (void)
 int s6ps_grcache_lookup (stralloc *sa, gid_t gid)
 {
   int wasnull = !satmp.s ;
-  dius_t d = { .left = (unsigned int)gid, .right = satmp.len } ;
-  unsigned int i ;
+  dius_t d = { .left = (uint32_t)gid, .right = satmp.len } ;
+  uint32_t i ;
   if (!avltree_search(&grcache_tree, &d.left, &i))
   {
     struct group *gr ;

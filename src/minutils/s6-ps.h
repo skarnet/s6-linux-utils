@@ -14,7 +14,7 @@
 typedef struct dius_s dius_t, *dius_t_ref ;
 struct dius_s
 {
-  unsigned int left ;
+  uint32_t left ;
   size_t right ;
 } ;
 #define DIUS_ZERO { .left = 0, .right = 0 }
@@ -146,7 +146,7 @@ typedef pfieldfmt_func_t *pfieldfmt_func_t_ref ;
 extern pfieldfmt_func_t_ref *s6ps_pfield_fmt ;
 
 extern void *left_dtok (unsigned int, void *) ;
-extern int uint_cmp (void const *, void const *, void *) ;
+extern int uint32_cmp (void const *, void const *, void *) ;
 extern int s6ps_pwcache_init (void) ;
 extern void s6ps_pwcache_finish (void) ;
 extern int s6ps_pwcache_lookup (stralloc *, uid_t) ;

@@ -2,6 +2,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
@@ -52,10 +53,10 @@ void *left_dtok (unsigned int d, void *x)
   return (void *)&genalloc_s(dius_t, (genalloc *)x)[d].left ;
 }
 
-int uint_cmp (void const *a, void const *b, void *x)
+int uint32_cmp (void const *a, void const *b, void *x)
 {
-  unsigned int aa = *(unsigned int *)a ;
-  unsigned int bb = *(unsigned int *)b ;
+  uint32_t aa = *(uint32_t *)a ;
+  uint32_t bb = *(uint32_t *)b ;
   (void)x ;
   return (aa < bb) ? -1 : (aa > bb) ;
 }
@@ -286,7 +287,7 @@ int main (int argc, char const *const *argv)
 
     {
       AVLTREEB_TYPE(n+1) pidtree ;
-      avltreeb_init(&pidtree, n+1, &pid_dtok, &uint_cmp, p) ;
+      avltreeb_init(&pidtree, n+1, &pid_dtok, &uint32_cmp, p) ;
       for (i = 0 ; i < n ; i++)
       {
         if (needstat && !s6ps_statparse(p+i))

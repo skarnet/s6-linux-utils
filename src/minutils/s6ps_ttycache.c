@@ -5,6 +5,7 @@
 #endif
 
 #include <string.h>
+#include <stdint.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <skalibs/types.h>
@@ -22,7 +23,7 @@ static genalloc ttycache_index = GENALLOC_ZERO ;
 
 int s6ps_ttycache_init (void)
 {
-  avltree_init(&ttycache_tree, 5, 3, 8, &left_dtok, &uint_cmp, &ttycache_index) ;
+  avltree_init(&ttycache_tree, 5, 3, 8, &left_dtok, &uint32_cmp, &ttycache_index) ;
   return 1 ;
 }
 
@@ -112,8 +113,8 @@ static int ttyguess (stralloc *sa, dev_t ttynr)
 int s6ps_ttycache_lookup (stralloc *sa, dev_t ttynr)
 {
   int wasnull = !satmp.s ;
-  dius_t d = { .left = (unsigned int)ttynr, .right = satmp.len } ;
-  unsigned int i ;
+  dius_t d = { .left = (uint32_t)ttynr, .right = satmp.len } ;
+  uint32_t i ;
   if (!avltree_search(&ttycache_tree, &d.left, &i))
   {
     unsigned int n = genalloc_len(dius_t, &ttycache_index) ;

@@ -59,7 +59,7 @@ void s6ps_otree (pscan_t *p, unsigned int n, avltreen *pidtree, unsigned int *or
  /* Compute the ppid tree */
   for (i = 0 ; i < n ; i++)
   {
-    unsigned int k ;
+    uint32_t k ;
     if (!avltreen_search(pidtree, &p[i].ppid, &k)) k = n-1 ;
     orderedlist[i] = k ; /* using orderedlist as ppindex */
     nchild[k]++ ;

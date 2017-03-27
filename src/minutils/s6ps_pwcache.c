@@ -1,6 +1,7 @@
 /* ISC license. */
 
 #include <sys/types.h>
+#include <stdint.h>
 #include <pwd.h>
 #include <errno.h>
 #include <skalibs/types.h>
@@ -15,7 +16,7 @@ static genalloc pwcache_index = GENALLOC_ZERO ;
 
 int s6ps_pwcache_init (void)
 {
-  avltree_init(&pwcache_tree, 5, 3, 8, &left_dtok, &uint_cmp, &pwcache_index) ;
+  avltree_init(&pwcache_tree, 5, 3, 8, &left_dtok, &uint32_cmp, &pwcache_index) ;
   return 1 ;
 }
 
@@ -28,8 +29,8 @@ void s6ps_pwcache_finish (void)
 int s6ps_pwcache_lookup (stralloc *sa, uid_t uid)
 {
   int wasnull = !satmp.s ;
-  dius_t d = { .left = (unsigned int)uid, .right = satmp.len } ;
-  unsigned int i ;
+  dius_t d = { .left = (uint32_t)uid, .right = satmp.len } ;
+  uint32_t i ;
   if (!avltree_search(&pwcache_tree, &d.left, &i))
   {
     struct passwd *pw ;
