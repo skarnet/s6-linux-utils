@@ -30,7 +30,7 @@
 #define BUFSIZE 8191
 
 static char buf1[BUFSIZE + 1] ;
-static buffer b1 = BUFFER_INIT(&fd_writev, 1, buf1, BUFSIZE + 1) ;
+static buffer b1 = BUFFER_INIT(&buffer_write, 1, buf1, BUFSIZE + 1) ;
 static unsigned int cont = 1, verbosity = 1 ;
 static pid_t pid ;
 

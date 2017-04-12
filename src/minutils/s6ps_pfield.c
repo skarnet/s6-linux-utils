@@ -93,15 +93,6 @@ char const *const *s6ps_opttable = opttable ;
 
 static tain_t boottime = TAIN_EPOCH ;
 
-static int fmt_32 (pscan_t *p, size_t *pos, size_t *len, uint32_t u)
-{
-  if (!stralloc_readyplus(&p->data, UINT32_FMT)) return 0 ;
-  *pos = p->data.len ;
-  *len = uint32_fmt(p->data.s + *pos, u) ;
-  p->data.len += *len ;
-  return 1 ;
-}
-
 static int fmt_64 (pscan_t *p, size_t *pos, size_t *len, uint64_t u)
 {                                                          
   if (!stralloc_readyplus(&p->data, UINT64_FMT)) return 0 ;
@@ -292,7 +283,7 @@ static int fmt_nice (pscan_t *p, size_t *pos, size_t *len)
 
 static int fmt_threads (pscan_t *p, size_t *pos, size_t *len)
 {
-  return fmt_32(p, pos, len, p->threads) ;
+  return fmt_64(p, pos, len, p->threads) ;
 }
 
 static int fmt_timedate (pscan_t *p, size_t *pos, size_t *len, struct tm const *tm)
@@ -359,12 +350,12 @@ static int fmt_rsslim (pscan_t *p, size_t *pos, size_t *len)
 
 static int fmt_cpuno (pscan_t *p, size_t *pos, size_t *len)
 {
-  return fmt_32(p, pos, len, p->cpuno) ;
+  return fmt_64(p, pos, len, p->cpuno) ;
 }
 
 static int fmt_rtprio (pscan_t *p, size_t *pos, size_t *len)
 {
-  return fmt_32(p, pos, len, p->rtprio) ;
+  return fmt_64(p, pos, len, p->rtprio) ;
 }
 
 static int fmt_policy (pscan_t *p, size_t *pos, size_t *len)
@@ -397,9 +388,9 @@ static int fmt_group (pscan_t *p, size_t *pos, size_t *len)
 
 static struct sysinfo si = { .totalram = 0, .loads = { 0, 0, 0 } } ;
 
-static uint64 gettotalmem (void)
+static uint64_t gettotalmem (void)
 {
-  uint64 totalmem = 0 ;
+  uint64_t totalmem = 0 ;
   if (!si.totalram && (sysinfo(&si) < 0)) return 0 ;
   totalmem = si.totalram ;
   totalmem *= si.mem_unit ;
@@ -410,9 +401,9 @@ static int percent (stralloc *sa, unsigned int n, size_t *pos, size_t *len)
 {
   if (!stralloc_readyplus(sa, UINT64_FMT+1)) return 0 ;
   *pos = sa->len ;
-  sa->len += uint64_fmt(sa->s + sa->len, n / 100) ;
+  sa->len += uint_fmt(sa->s + sa->len, n / 100) ;
   sa->s[sa->len++] = '.' ;
-  uint320_fmt(sa->s + sa->len, (uint32)(n % 100), 2) ;
+  uint0_fmt(sa->s + sa->len, n % 100, 2) ;
   sa->len += 2 ;
   *len = sa->len - *pos ;
   return 1 ;

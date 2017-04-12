@@ -90,15 +90,15 @@ struct pscan_s
   uint64_t cstime ;
   int prio ;
   int nice ;
-  uint32_t threads ;
+  uint64_t threads ;
   uint64_t start ;
   uint64_t vsize ;
   uint64_t rss ;
   uint64_t rsslim ;
   uint64_t wchan ;
-  uint32_t cpuno ;
-  uint32_t rtprio ;
-  uint32_t policy ;
+  uint64_t cpuno ;
+  uint64_t rtprio ;
+  uint64_t policy ;
 } ;
 
 #define PSCAN_ZERO \

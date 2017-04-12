@@ -14,16 +14,10 @@
     is still smaller than scanf (no floating point parsing etc.)
  */
 
-#define STATVARS 41
+#define STATVARS 49
 
 typedef size_t scanfunc_t (char const *, void *) ;
 typedef scanfunc_t *scanfunc_t_ref ;
-
-static size_t f32 (char const *s, void *u32)
-{
-  uint32_t *u = u32 ;
-  return uint32_scan(s, u) ;
-}
 
 static size_t f64 (char const *s, void *u64)
 {
@@ -31,23 +25,18 @@ static size_t f64 (char const *s, void *u64)
   return uint64_scan(s, u) ;
 }
 
-static size_t fint (char const *s, void *i)
-{
-  int *d = i ;
-  return int_scan(s, d) ;
-}
+#define DEFUN(name, type) \
+static size_t name (char const *s, void *p) \
+{ \
+  uint64_t u ; \
+  size_t len = uint64_scan(s, &u) ; \
+  *(type *)p = u ; \
+  return len ; \
+} \
 
-static size_t fpid (char const *s, void *p)
-{
-  pid_t *pid = p ;
-  return pid_scan(s, pid) ;
-}
-
-static size_t fdev (char const *s, void *p)
-{
-  dev_t *d = p ;
-  return dev_scan(s, d) ;
-}
+DEFUN(fint, int)
+DEFUN(fpid, pid_t)
+DEFUN(fdev, dev_t)
 
 static scanfunc_t_ref scanfuncs[STATVARS] =
 {
@@ -56,19 +45,19 @@ static scanfunc_t_ref scanfuncs[STATVARS] =
   &fpid, /* session */
   &fdev, /* tty_nr */
   &fpid, /* tpgid */
-  &f32, /* flags */
-  &f32, /* minflt */
-  &f32, /* cminflt */
-  &f32, /* majflt */
-  &f32, /* cmajflt */
+  &f64, /* flags */
+  &f64, /* minflt */
+  &f64, /* cminflt */
+  &f64, /* majflt */
+  &f64, /* cmajflt */
   &f64, /* utime */
   &f64, /* stime */
   &f64, /* cutime */
   &f64, /* cstime */
   &fint, /* priority */
   &fint, /* nice */
-  &f32, /* num_threads */
-  &f32, /* itrealvalue */
+  &f64, /* num_threads */
+  &f64, /* itrealvalue */
   &f64, /* starttime */
   &f64, /* vsize */
   &f64, /* rss */
@@ -78,26 +67,34 @@ static scanfunc_t_ref scanfuncs[STATVARS] =
   &f64, /* startstack */
   &f64, /* kstkesp */
   &f64, /* kstkeip */
-  &f32, /* signal */
-  &f32, /* blocked */
-  &f32, /* sigignore */
-  &f32, /* sigcatch */
+  &f64, /* signal */
+  &f64, /* blocked */
+  &f64, /* sigignore */
+  &f64, /* sigcatch */
   &f64, /* wchan */
-  &f32, /* nswap */
-  &f32, /* cnswap */
-  &f32, /* exit_signal */
-  &f32, /* processor */
-  &f32, /* rt_priority */
-  &f32, /* policy */
+  &f64, /* nswap */
+  &f64, /* cnswap */
+  &fint, /* exit_signal */
+  &f64, /* processor */
+  &f64, /* rt_priority */
+  &f64, /* policy */
   &f64, /* delayacct_blkio_ticks */
-  &f32, /* guest_time */
-  &f32 /* cguest_time */
+  &f64, /* guest_time */
+  &f64, /* cguest_time */
+  &f64, /* start_data */
+  &f64, /* end_data */
+  &f64, /* start_brk */
+  &f64, /* arg_start */
+  &f64, /* arg_end */
+  &f64, /* env_start */
+  &f64, /* env_end */
+  &fint /* exit_code */
 } ;
 
 int s6ps_statparse (pscan_t *p)
 {
   uint64_t dummy64 ;
-  uint32_t dummy32 ;
+  int dummyint ;
   size_t pos = 0 ;
   void *scanresults[STATVARS] =
   {
@@ -106,11 +103,11 @@ int s6ps_statparse (pscan_t *p)
     &p->session,
     &p->ttynr,
     &p->tpgid,
-    &dummy32,
-    &dummy32,
-    &dummy32,
-    &dummy32,
-    &dummy32,
+    &dummy64,
+    &dummy64,
+    &dummy64,
+    &dummy64,
+    &dummy64,
     &p->utime,
     &p->stime,
     &p->cutime,
@@ -118,7 +115,7 @@ int s6ps_statparse (pscan_t *p)
     &p->prio,
     &p->nice,
     &p->threads,
-    &dummy32,
+    &dummy64,
     &p->start,
     &p->vsize,
     &p->rss,
@@ -128,27 +125,35 @@ int s6ps_statparse (pscan_t *p)
     &dummy64,
     &dummy64,
     &dummy64,
-    &dummy32,
-    &dummy32,
-    &dummy32,
-    &dummy32,
+    &dummy64,
+    &dummy64,
+    &dummy64,
+    &dummy64,
     &p->wchan,
-    &dummy32,
-    &dummy32,
-    &dummy32,
+    &dummy64,
+    &dummy64,
+    &dummy64,
     &p->cpuno,
     &p->rtprio,
     &p->policy,
     &dummy64,
-    &dummy32,
-    &dummy32
+    &dummy64,
+    &dummy64,
+    &dummy64,
+    &dummy64,
+    &dummy64,
+    &dummy64,
+    &dummy64,
+    &dummy64,
+    &dummy64,
+    &dummyint
   } ;
   unsigned int i = 0 ;
 
   if (!p->statlen) return 0 ;
-  pos = uint32_scan(p->data.s, &dummy32) ;
+  pos = uint64_scan(p->data.s, &dummy64) ;
   if (!pos) return 0 ;
-  if (dummy32 != p->pid) return 0 ;
+  if (dummy64 != p->pid) return 0 ;
   if (pos + 5 + p->commlen > p->statlen) return 0 ;
   if (p->data.s[pos++] != ' ') return 0 ;
   if (p->data.s[pos++] != '(') return 0 ;
