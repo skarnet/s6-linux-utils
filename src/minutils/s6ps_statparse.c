@@ -9,6 +9,7 @@
 #include <skalibs/tai.h>
 #include "s6-ps.h"
 
+
  /*
     going to great lengths to avoid scanf(), but all this code
     is still smaller than scanf (no floating point parsing etc.)
@@ -25,7 +26,7 @@ static size_t f64 (char const *s, void *u64)
   return uint64_scan(s, u) ;
 }
 
-#define DEFUN(name, type) \
+#define DEFUNU(name, type) \
 static size_t name (char const *s, void *p) \
 { \
   uint64_t u ; \
@@ -34,9 +35,18 @@ static size_t name (char const *s, void *p) \
   return len ; \
 } \
 
-DEFUN(fint, int)
-DEFUN(fpid, pid_t)
-DEFUN(fdev, dev_t)
+#define DEFUNS(name, type) \
+static size_t name (char const *s, void *p) \
+{ \
+  int64_t d ; \
+  size_t len = int64_scan(s, &d) ; \
+  *(type *)p = d ; \
+  return len ; \
+} \
+
+DEFUNS(fint, int)
+DEFUNS(fpid, pid_t)
+DEFUNU(fdev, dev_t)
 
 static scanfunc_t_ref scanfuncs[STATVARS] =
 {
