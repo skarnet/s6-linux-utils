@@ -9,7 +9,7 @@ Build Instructions
   - skalibs version 2.5.0.0 or later: http://skarnet.org/software/skalibs/
 
  This software is Linux-specific. It will run on a Linux kernel,
-version 2.6.32 or later.
+version 3.5 or later.
 
 
 * Standard usage

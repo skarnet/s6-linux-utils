@@ -9,32 +9,28 @@
 #include <errno.h>
 #include <signal.h>
 #include <sys/socket.h>
-#include <sys/wait.h>
 #include <linux/netlink.h>
 #include <skalibs/types.h>
 #include <skalibs/allreadwrite.h>
 #include <skalibs/siovec.h>
 #include <skalibs/buffer.h>
 #include <skalibs/sgetopt.h>
+#include <skalibs/error.h>
 #include <skalibs/strerr2.h>
 #include <skalibs/iopause.h>
 #include <skalibs/djbunix.h>
 #include <skalibs/sig.h>
 #include <skalibs/selfpipe.h>
 
-#define USAGE "s6-uevent-listener [ -v verbosity ] [ -b kbufsz ] helperprogram..."
+#define USAGE "s6-uevent-listener [ -v verbosity ] [ -b kbufsz ]"
 #define dieusage() strerr_dieusage(100, USAGE)
 #define dienomem() strerr_diefu1sys(111, "build string") ;
 
 #define MAXNLSIZE 4096
-#define BUFSIZE 8191
 
-static char buf1[BUFSIZE + 1] ;
-static buffer b1 = BUFFER_INIT(&buffer_write, 1, buf1, BUFSIZE + 1) ;
 static unsigned int cont = 1, verbosity = 1 ;
-static pid_t pid ;
 
-static inline int fd_recvmsg (int fd, struct msghdr *hdr)
+static inline ssize_t fd_recvmsg (int fd, struct msghdr *hdr)
 {
   ssize_t r ;
   do r = recvmsg(fd, hdr, MSG_DONTWAIT) ;
@@ -64,26 +60,6 @@ static inline void handle_signals (void)
         cont = 0 ;
         fd_close(0) ;
         break ;
-      case SIGCHLD :
-      {
-        char fmt[UINT_FMT] ;
-        int wstat ;
-        int r = wait_pid_nohang(pid, &wstat) ;
-        if (r < 0)
-          if (errno != ECHILD) strerr_diefu1sys(111, "wait_pid_nohang") ;
-          else break ;
-        else if (!r) break ;
-        if (WIFSIGNALED(wstat))
-        {
-          fmt[uint_fmt(fmt, WTERMSIG(wstat))] = 0 ;
-          strerr_dief2x(1, "child crashed with signal ", fmt) ;
-        }
-        else
-        {
-          fmt[uint_fmt(fmt, WEXITSTATUS(wstat))] = 0 ;
-          strerr_dief2x(1, "child exited ", fmt) ;
-        }
-      }
       default :
         strerr_dief1x(101, "internal error: inconsistent signal state. Please submit a bug-report.") ;
     }
@@ -92,7 +68,8 @@ static inline void handle_signals (void)
 
 static inline void handle_stdout (void)
 {
-  if (!buffer_flush(&b1)) strerr_diefu1sys(111, "flush stdout") ;
+  if (!buffer_flush(buffer_1) && !error_isagain(errno))
+    strerr_diefu1sys(111, "flush stdout") ;
 }
 
 static inline void handle_netlink (void)
@@ -110,7 +87,7 @@ static inline void handle_netlink (void)
     .msg_flags = 0
   } ;
   ssize_t r ;
-  buffer_wpeek(&b1, v) ;
+  buffer_wpeek(buffer_1, v) ;
   siovec_trunc(v, 2, siovec_len(v, 2) - 1) ;
   r = sanitize_read(fd_recvmsg(0, &msg)) ;
   if (r < 0)
@@ -131,14 +108,14 @@ static inline void handle_netlink (void)
   {
     if (verbosity >= 3)
     {
-      char fmt[UINT_FMT] ;
-      fmt[uint_fmt(fmt, nl.nl_pid)] = 0 ;
+      char fmt[PID_FMT] ;
+      fmt[pid_fmt(fmt, nl.nl_pid)] = 0 ;
       strerr_warnw3x("netlink message", " from userspace process ", fmt) ;
     }
     return ;
   }
-  buffer_wseek(&b1, r) ;
-  buffer_putnoflush(&b1, "", 1) ;
+  buffer_wseek(buffer_1, r) ;
+  buffer_putnoflush(buffer_1, "", 1) ;
 }
 
 
@@ -161,45 +138,29 @@ int main (int argc, char const *const *argv, char const *const *envp)
       }
     }
     argc -= l.ind ; argv += l.ind ;
-    if (!argc) strerr_dieusage(100, USAGE) ;
     if (!netlink_init_stdin(kbufsz)) strerr_diefu1sys(111, "init netlink") ;
   }
 
   x[0].fd = selfpipe_init() ;
   if (x[0].fd < 0) strerr_diefu1sys(111, "init selfpipe") ;
   if (sig_ignore(SIGPIPE) < 0) strerr_diefu1sys(111, "ignore SIGPIPE") ;
-  {
-    sigset_t set ;
-    sigemptyset(&set) ;
-    sigaddset(&set, SIGTERM) ;
-    sigaddset(&set, SIGCHLD) ;
-    if (selfpipe_trapset(&set) < 0) strerr_diefu1sys(111, "trap signals") ;
-  }
-
-  {
-    int fd ;
-    pid = child_spawn1_pipe(argv[0], argv, envp, &fd, 0) ;
-    if (!pid) strerr_diefu2sys(111, "spawn ", argv[0]) ;
-    if (fd_move(1, fd) < 0) strerr_diefu1sys(111, "move pipe to stdout") ;
-    if (ndelay_on(1) < 0) strerr_diefu1sys(111, "make stdout nonblocking") ;
-  }
+  if (selfpipe_trap(SIGTERM) < 0) strerr_diefu1sys(111, "trap SIGTERM") ;
 
   if (verbosity >= 2) strerr_warni1x("starting") ;
 
   while (cont || buffer_len(buffer_1))
   {
     int r ;
-    x[1].events = buffer_len(&b1) ? IOPAUSE_WRITE : 0 ;
-    x[2].events = buffer_available(&b1) >= MAXNLSIZE + 1 ? IOPAUSE_READ : 0 ;
+    x[1].events = buffer_len(buffer_1) ? IOPAUSE_WRITE : 0 ;
+    x[2].events = buffer_available(buffer_1) >= MAXNLSIZE + 1 ? IOPAUSE_READ : 0 ;
     r = iopause(x, 2 + cont, 0, 0) ;
     if (r < 0) strerr_diefu1sys(111, "iopause") ;
     if (!r) continue ;
-    if (x[0].revents & IOPAUSE_EXCEPT)
-      strerr_diefu1x(111, "iopause: trouble with selfpipe") ;
-    if (x[0].revents & IOPAUSE_READ)
-      handle_signals() ;
-    if (x[1].revents & IOPAUSE_WRITE)
-      handle_stdout() ;
+    for (r = 0 ; r < 2 ; r++)
+      if (x[r].revents & IOPAUSE_EXCEPT)
+        x[r].revents |= IOPAUSE_READ | IOPAUSE_WRITE ;
+    if (x[0].revents & IOPAUSE_READ) handle_signals() ;
+    if (x[1].revents & IOPAUSE_WRITE) handle_stdout() ;
     if (cont && x[2].events & IOPAUSE_READ && x[2].revents & IOPAUSE_READ)
       handle_netlink() ;
   }
