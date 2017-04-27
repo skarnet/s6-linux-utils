@@ -30,6 +30,7 @@ int main (int argc, char const *const *argv, char const *const *envp)
   unsigned int kbufsz = 65536, verbosity = 1 ;
   char const *linevar = 0 ;
   char const *targ = 0 ;
+  char fmtv[UINT_FMT] ;
   PROG = "s6-devd" ;
   {
     subgetopt_t l = SUBGETOPT_ZERO ;
@@ -50,50 +51,54 @@ int main (int argc, char const *const *argv, char const *const *envp)
     argc -= l.ind ; argv += l.ind ;
   }
   if (!argc) strerr_dieusage(100, USAGE) ;
+  if (verbosity != 1) fmtv[uint_fmt(fmtv, verbosity)] = 0 ;
 
   {
-    size_t pos = 0 ;
     unsigned int m = 0 ;
-    char fmt[UINT_FMT * 3] ;
-    char const *newargv[argc + 15] ;
-    newargv[m++] = S6_LINUX_UTILS_BINPREFIX "s6-uevent-listener" ;
+    int fd ;
+    char const *cargv[argc + 9] ;
+    cargv[m++] = S6_LINUX_UTILS_BINPREFIX "s6-uevent-spawner" ;
     if (verbosity != 1)
     {
-      newargv[m++] = "-v" ;
-      newargv[m++] = fmt + pos ;
-      pos += uint_fmt(fmt + pos, verbosity) ;
-      fmt[pos++] = 0 ;
-    }
-    if (kbufsz != 65536)
-    {
-      newargv[m++] = "-b" ;
-      newargv[m++] = fmt + pos ;
-      pos += uint_fmt(fmt + pos, kbufsz) ;
-      fmt[pos++] = 0 ;
-    }
-    newargv[m++] = "--" ;
-    newargv[m++] = S6_LINUX_UTILS_BINPREFIX "s6-uevent-spawner" ;
-    if (verbosity != 1)
-    {
-      newargv[m++] = "-v" ;
-      newargv[m++] = fmt + pos ;
-      pos += uint_fmt(fmt + pos, verbosity) ;
-      fmt[pos++] = 0 ;
+      cargv[m++] = "-v" ;
+      cargv[m++] = fmtv ;
     }
     if (linevar)
     {
-      newargv[m++] = "-l" ;
-      newargv[m++] = linevar ;
+      cargv[m++] = "-l" ;
+      cargv[m++] = linevar ;
     }
     if (targ)
     {
-      newargv[m++] = "-t" ;
-      newargv[m++] = targ ;
+      cargv[m++] = "-t" ;
+      cargv[m++] = targ ;
     }
-    newargv[m++] = "--" ;
-    while (*argv) newargv[m++] = *argv++ ;
-    newargv[m++] = 0 ;
-    pathexec_run(newargv[0], newargv, envp) ;
-    strerr_dieexec(111, newargv[0]) ;
+    cargv[m++] = "--" ;
+    while (*argv) cargv[m++] = *argv++ ;
+    cargv[m++] = 0 ;
+    if (!child_spawn1_pipe(cargv[0], cargv, envp, &fd, 0))
+      strerr_diefu2sys(111, "spawn ", cargv[0]) ;
+    if (fd_move(1, fd) < 0) strerr_diefu1sys(111, "fd_move") ;
+  }
+
+  {
+    unsigned int m = 0 ;
+    char const *pargv[6] ;
+    char fmtk[UINT_FMT] ;
+    pargv[m++] = S6_LINUX_UTILS_BINPREFIX "s6-uevent-listener" ;
+    if (verbosity != 1)
+    {
+      pargv[m++] = "-v" ;
+      pargv[m++] = fmtv ;
+    }
+    if (kbufsz != 65536)
+    {
+      pargv[m++] = "-b" ;
+      pargv[m++] = fmtk ;
+      fmtk[uint_fmt(fmtk, kbufsz)] = 0 ;
+    }
+    pargv[m++] = 0 ;
+    pathexec_run(pargv[0], pargv, envp) ;
+    strerr_dieexec(111, pargv[0]) ;
   }
 }

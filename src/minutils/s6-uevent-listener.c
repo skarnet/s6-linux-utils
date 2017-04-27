@@ -156,12 +156,10 @@ int main (int argc, char const *const *argv, char const *const *envp)
     r = iopause(x, 2 + cont, 0, 0) ;
     if (r < 0) strerr_diefu1sys(111, "iopause") ;
     if (!r) continue ;
-    for (r = 0 ; r < 2 ; r++)
-      if (x[r].revents & IOPAUSE_EXCEPT)
-        x[r].revents |= IOPAUSE_READ | IOPAUSE_WRITE ;
-    if (x[0].revents & IOPAUSE_READ) handle_signals() ;
+    if (x[1].revents & IOPAUSE_EXCEPT) break ;
     if (x[1].revents & IOPAUSE_WRITE) handle_stdout() ;
-    if (cont && x[2].events & IOPAUSE_READ && x[2].revents & IOPAUSE_READ)
+    if (x[0].revents & (IOPAUSE_READ | IOPAUSE_EXCEPT)) handle_signals() ;
+    if (cont && x[2].events & IOPAUSE_READ && x[2].revents & (IOPAUSE_READ | IOPAUSE_EXCEPT))
       handle_netlink() ;
   }
   if (verbosity >= 2) strerr_warni1x("exiting") ;
