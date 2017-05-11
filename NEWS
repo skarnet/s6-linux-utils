@@ -1,5 +1,15 @@
 Changelog for s6-linux-utils.
 
+In 2.4.0.0
+----------
+
+ - s6-uevent-listener now writes events to stdout instead of spawning
+a program itself. s6-uevent-spawner now reads on stdin. Instead of
+running "s6-uevent-listener s6-uevent-spawner mdev", people now run
+"s6-uevent-listener | s6-uevent-spawner mdev".
+ - s6-devd hides the details.
+
+
 In 2.3.0.0
 ----------
 
