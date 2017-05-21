@@ -3,11 +3,14 @@ Changelog for s6-linux-utils.
 In 2.4.0.0
 ----------
 
+ - Linux dependency bumped to 3.5, because the /proc format changed.
+things *may* work with older kernels, but it's likely that s6-ps
+will not.
  - s6-uevent-listener now writes events to stdout instead of spawning
 a program itself. s6-uevent-spawner now reads on stdin. Instead of
 running "s6-uevent-listener s6-uevent-spawner mdev", people now run
 "s6-uevent-listener | s6-uevent-spawner mdev".
- - s6-devd hides the details.
+ - s6-devd API unchanged: it hides the details.
 
 
 In 2.3.0.0
