@@ -6,14 +6,14 @@
     <title>s6-linux-utils: the s6-uevent-listener program</title>
     <meta name="Description" content="s6-linux-utils: the s6-uevent-listener program" />
     <meta name="Keywords" content="s6 linux administration root utilities devd mdev udev s6-uevent-listener uevent" />
-    <!-- <link rel="stylesheet" type="text/css" href="http://skarnet.org/default.css" /> -->
+    <!-- <link rel="stylesheet" type="text/css" href="//skarnet.org/default.css" /> -->
   </head>
 <body>
 
 <p>
 <a href="index.html">s6-linux-utils</a><br />
-<a href="http://skarnet.org/software/">Software</a><br />
-<a href="http://skarnet.org/">skarnet.org</a>
+<a href="//skarnet.org/software/">Software</a><br />
+<a href="//skarnet.org/">skarnet.org</a>
 </p>
 
 <h1> The <tt>s6-uevent-listener</tt> program </h1>
@@ -86,7 +86,7 @@ MINOR=34\0
 
 <ul>
  <li> s6-uevent-listener is a daemon; it should be run under a proper supervision system such
-as <a href="http://skarnet.org/software/s6/">s6</a>. </li>
+as <a href="//skarnet.org/software/s6/">s6</a>. </li>
 <li> If you are running s6-uevent-listener, <em>prog...</em> should be the
 only program handling uevents, which means that
 <tt>/proc/sys/kernel/hotplug</tt> should be empty. </li>
@@ -95,8 +95,8 @@ only program handling uevents, which means that
    <li> <tt>s6-uevent-listener | s6-uevent-spawner mdev</tt> </li>
    <li> <tt>s6-uevent-listener | mdevd</tt> </li>
    <li> Those examples can be made safer by using a supervision system:
-under <a href="http://skarnet.org/software/s6/">s6</a> or
-<a href="http://skarnet.org/software/s6-rc/">s6-rc</a>, write a service
+under <a href="//skarnet.org/software/s6/">s6</a> or
+<a href="//skarnet.org/software/s6-rc/">s6-rc</a>, write a service
 pipeline where <tt>s6-uevent-listener</tt> is a producer and
 <tt>s6-uevent-spawner mdev</tt> or <tt>mdevd</tt> is a consumer. This
 setup has the advantage, among others, that you can restart the netlink
