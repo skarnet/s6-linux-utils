@@ -98,7 +98,6 @@ int main (int argc, char const *const *argv, char const *const *envp)
       fmtk[uint_fmt(fmtk, kbufsz)] = 0 ;
     }
     pargv[m++] = 0 ;
-    pathexec_run(pargv[0], pargv, envp) ;
-    strerr_dieexec(111, pargv[0]) ;
+    xpathexec_run(pargv[0], pargv, envp) ;
   }
 }

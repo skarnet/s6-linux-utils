@@ -19,6 +19,5 @@ int main (int argc, char const *const *argv, char const *const *envp)
   if (chdir(argv[1]) < 0) strerr_diefu2sys(111, "chdir to ", argv[1]) ;
   if (pivot_root(".", argv[2]) < 0) strerr_diefu1sys(111, "pivot_root") ;
   if (chroot(".") < 0) strerr_diefu1sys(111, "chroot") ;
-  pathexec_run(argv[3], argv+3, envp) ;
-  strerr_dieexec(111, argv[3]) ;
+  xpathexec_run(argv[3], argv+3, envp) ;
 }

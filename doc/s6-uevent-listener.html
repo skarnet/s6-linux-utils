@@ -37,8 +37,8 @@ hotplug events, as the <em>udev</em> program does. </li>
 null characters, so a terminal will not display them correctly. To
 properly use s6-uevent-listener, it should be piped into a handler
 program such as
-<a href="s6-uevent-spawner.html">s6-uevent-spawner</a> or
-<a href="mdevd.html">mdevd</a>. </li>
+<a href="s6-uevent-spawner.html">s6-uevent-spawner</a>.
+<!-- or <a href="mdevd.html">mdevd</a>. --> </li>
  <li> s6-uevent-listener is a long-lived program.
 When it receives a SIGTERM, it stops listening; it will
 exit as soon as it has flushed its event queue to stdout. </li>
