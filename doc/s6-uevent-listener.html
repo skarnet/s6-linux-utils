@@ -93,12 +93,12 @@ only program handling uevents, which means that
  <li> Examples of valid uses of s6-uevent-listener:
   <ul>
    <li> <tt>s6-uevent-listener | s6-uevent-spawner mdev</tt> </li>
-   <li> <tt>s6-uevent-listener | mdevd</tt> </li>
+<!--   <li> <tt>s6-uevent-listener | mdevd</tt> </li> -->
    <li> Those examples can be made safer by using a supervision system:
 under <a href="//skarnet.org/software/s6/">s6</a> or
 <a href="//skarnet.org/software/s6-rc/">s6-rc</a>, write a service
 pipeline where <tt>s6-uevent-listener</tt> is a producer and
-<tt>s6-uevent-spawner mdev</tt> or <tt>mdevd</tt> is a consumer. This
+<tt>s6-uevent-spawner mdev</tt> <!-- or <tt>mdevd</tt> --> is a consumer. This
 setup has the advantage, among others, that you can restart the netlink
 listener and the event handler separately. </li>
   </ul>
