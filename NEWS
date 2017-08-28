@@ -1,5 +1,12 @@
 Changelog for s6-linux-utils.
 
+In 2.4.0.1
+----------
+
+ - Adaptation to skalibs-2.6.0.0. The chain-loading programs have
+changed exit codes when they fail to execute into another program.
+
+
 In 2.4.0.0
 ----------
 
