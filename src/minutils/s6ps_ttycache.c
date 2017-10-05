@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <sys/stat.h>
+#include <sys/sysmacros.h>
 #include <errno.h>
 #include <skalibs/types.h>
 #include <skalibs/allreadwrite.h>
