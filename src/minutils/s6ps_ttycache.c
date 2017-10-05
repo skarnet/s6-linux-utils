@@ -1,9 +1,5 @@
 /* ISC license. */
 
-#ifndef _BSD_SOURCE
-#define _BSD_SOURCE
-#endif
-
 #include <string.h>
 #include <stdint.h>
 #include <sys/stat.h>
