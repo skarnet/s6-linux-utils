@@ -2,69 +2,112 @@
 
 #include <sys/uio.h>
 #include <errno.h>
+#include <limits.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
-#include <sys/ioctl.h>
 #include <sys/inotify.h>
+#include <skalibs/types.h>
 #include <skalibs/allreadwrite.h>
 #include <skalibs/sgetopt.h>
 #include <skalibs/strerr2.h>
 #include <skalibs/error.h>
 #include <skalibs/buffer.h>
-#include <skalibs/bufalloc.h>
 #include <skalibs/sig.h>
 #include <skalibs/djbunix.h>
 #include <skalibs/iopause.h>
-#include <skalibs/types.h>
 
-#define USAGE "s6-logwatch [ -m maxbuffer ] logdir"
+#define USAGE "s6-logwatch [ logdir ]"
 #define dieusage() strerr_dieusage(100, USAGE)
 
-#define N 4096
-#define IESIZE 100
+#define B_READING 0
+#define B_BLOCKING 1
+#define B_WAITING 2
+static unsigned int state ;
+static int fd ;
+static int newcurrent = 0 ;
 
-typedef enum bstate_e bstate_t, *bstate_t_ref ;
-enum bstate_e
+union inotify_event_u
 {
-  B_TAILING = 0,
-  B_WAITING = 1
+  struct inotify_event event ;
+  char buf[sizeof(struct inotify_event) + NAME_MAX + 1] ;
 } ;
 
-static void X (void)
+static void goteof (void)
 {
-  strerr_diefu1x(101, "follow file state changes (race condition triggered). Sorry.") ;
-}
-
-static size_t nbcat (int fdcurrent)
-{
-  char buf[N+1] ;
-  buffer b = BUFFER_INIT(&fd_readv, fdcurrent, buf, N+1) ;
-  struct iovec v[2] ;
-  size_t bytes = 0 ;
-  for (;;)
+  if (newcurrent)
   {
-    ssize_t r = sanitize_read(buffer_fill(&b)) ;
-    if (!r) break ;
-    if (r < 0)
-    {
-      if (errno == EPIPE) break ;
-      else strerr_diefu1sys(111, "buffer_fill") ;
-    }
-    buffer_rpeek(&b, v) ;
-    if (!bufalloc_putv(bufalloc_1, v, 2))
-      strerr_diefu1sys(111, "bufalloc_putv") ;
-    buffer_rseek(&b, r) ;
-    bytes += r ;
+    fd_close(fd) ;
+    fd = open_read("current") ;
+    if (fd < 0) strerr_diefu1sys(111, "current") ;
+    newcurrent = 0 ;
+    state = B_READING ;
   }
-  return bytes ;
+  else state = B_BLOCKING ;
 }
 
+static int readit (int fd)
+{
+  struct iovec v[2] ;
+  ssize_t r ;
+  buffer_wpeek(buffer_1, v) ;
+  r = fd_readv(fd, v, 2) ;
+  switch (r)
+  {
+    case -1 : return 0 ;
+    case 0 : goteof() ; break ;
+    default : buffer_wseek(buffer_1, r) ;
+  }
+  return 1 ;
+}
+
+static void maketransition (unsigned int transition)
+{
+  static unsigned char const table[3][3] = {
+    { 0x10, 0x00, 0x00 },
+    { 0x60, 0x22, 0x00 },
+    { 0x40, 0x03, 0x02 }
+  } ;
+  unsigned char c = table[state][transition] ;
+  state = c & 0x0f ;
+  if (state == 3) strerr_dief1x(101, "current moved twice without being recreated") ;
+  if (c & 0x10) newcurrent = 1 ;
+  if (c & 0x20) { fd_close(fd) ; fd = -1 ; }
+  if (c & 0x40)
+  {
+    fd = open_read("current") ;
+    if (fd < 0) strerr_diefu1sys(111, "current") ;
+  }
+}
+
+static void handle_event (int ifd, int watch)
+{
+  ssize_t r ;
+  size_t offset = 0 ;
+  union inotify_event_u u ;
+  r = read(ifd, u.buf, sizeof(u.buf)) ;
+  while (r > 0)
+  {
+    struct inotify_event *event = (struct inotify_event *)(u.buf + offset) ;
+    offset += sizeof(struct inotify_event) + event->len ;
+    r -= sizeof(struct inotify_event) + event->len ;
+    if (event->wd == watch && !strcmp(event->name, "current"))
+    {
+      int transition = -1 ;
+      if (event->mask & IN_CREATE) transition = 0 ;
+      else if (event->mask & IN_MOVED_FROM) transition = 1 ;
+      else if (event->mask & IN_MODIFY) transition = 2 ;
+      if (transition >= 0) maketransition(transition) ;
+    }
+  }
+}
 
 int main (int argc, char const *const *argv)
 {
+  iopause_fd x[2] = { { .events = IOPAUSE_READ }, { .fd = 1 } } ;
   char const *dir = "." ;
-  unsigned long maxlen = 4000 ;
+  int watch ;
+  unsigned int maxlen = 4096 ;
   PROG = "s6-logwatch" ;
   {
     subgetopt_t l = SUBGETOPT_ZERO ;
@@ -74,7 +117,10 @@ int main (int argc, char const *const *argv)
       if (opt == -1) break ;
       switch (opt)
       {
-        case 'm' : if (!ulong0_scan(l.arg, &maxlen)) dieusage() ; break ;
+        case 'm' :
+          if (!uint0_scan(l.arg, &maxlen)) dieusage() ;
+          strerr_warnw1x("the -m option is deprecated") ;
+          break ;
         default : dieusage() ;
       }
     }
@@ -83,74 +129,42 @@ int main (int argc, char const *const *argv)
 
   if (argc) dir = *argv ;
   if (chdir(dir) < 0) strerr_diefu2sys(111, "chdir to ", dir) ;
-  {
-    iopause_fd x[1] = { { -1, IOPAUSE_READ, 0 } } ;
-    size_t pos = 0 ;
-    int fdcurrent = -1 ;
-    int w ;
-    bstate_t state = B_TAILING ;
-    x[0].fd = inotify_init() ;
-    if (x[0].fd < 0) strerr_diefu1sys(111, "inotify_init") ;
-    if (ndelay_on(x[0].fd) < 0) strerr_diefu1sys(111, "ndelay_on inotify fd") ;
-    w = inotify_add_watch(x[0].fd, ".", IN_CREATE | IN_MODIFY | IN_CLOSE_WRITE) ;
-    if (w < 0) strerr_diefu1sys(111, "inotify_add_watch") ;
-    if (sig_ignore(SIGPIPE) == -1) strerr_diefu1sys(111, "sig_ignore(SIGPIPE)") ;
-    fdcurrent = open_readb("current") ;
-    if (fdcurrent < 0)
-      if (errno != ENOENT) strerr_diefu1sys(111, "open_readb current") ;
-      else state = B_WAITING ;
-    else pos = nbcat(fdcurrent) ;
 
-    for (;;)
+  x[0].fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC) ;
+  if (x[0].fd < 0) strerr_diefu1sys(111, "inotify_init") ;
+  watch = inotify_add_watch(x[0].fd, ".", IN_CREATE | IN_MOVED_FROM | IN_MODIFY) ;
+  if (watch < 0) strerr_diefu1sys(111, "inotify_add_watch") ;
+  fd = open_readb("current") ;
+  if (fd < 0)
+  {
+    if (errno != ENOENT) strerr_diefu3sys(111, "open ", dir, "/current") ;
+    state = B_WAITING ;
+  }
+  else state = B_READING ;
+  if (sig_ignore(SIGPIPE) == -1) strerr_diefu1sys(111, "sig_ignore(SIGPIPE)") ;
+  if (state == B_READING)
+  {
+    if (!readit(fd)) strerr_diefu3sys(111, "read from ", dir, "/current") ;
+  }
+
+  for (;;)
+  {
+    int r ;
+    x[1].events = buffer_len(buffer_1) ? IOPAUSE_WRITE : 0 ;
+    r = iopause(x, 2, 0, 0) ;
+    if (r < 0) strerr_diefu1sys(111, "iopause") ;
+    if (x[0].revents & IOPAUSE_EXCEPT) x[0].revents |= IOPAUSE_READ ;
+    if (x[1].revents & IOPAUSE_EXCEPT) x[1].revents |= IOPAUSE_WRITE ;
+    if (x[1].revents & IOPAUSE_WRITE)
     {
-      int rr ;
-      if (!bufalloc_flush(bufalloc_1)) strerr_diefu1sys(111, "write to stdout") ;
-      rr = iopause(x, 1, 0, 0) ;
-      if (rr < 0) strerr_diefu1sys(111, "iopause") ;
-      if (x[0].revents & IOPAUSE_READ)
-      {
-        char iebuf[IESIZE] ;
-        while (bufalloc_len(bufalloc_1) < maxlen)
-        {
-          size_t i = 0 ;
-          ssize_t r = sanitize_read(fd_read(x[0].fd, iebuf, IESIZE)) ;
-          if (r < 0) strerr_diefu1sys(111, "read from inotify fd") ;
-          if (!r) break ;
-          while (i < (size_t)r)
-          {
-            struct inotify_event *ie = (struct inotify_event *)(iebuf + i) ;
-            if ((ie->wd != w) || !ie->len || strcmp(ie->name, "current")) goto cont ;
-            if (ie->mask & IN_MODIFY)
-            {
-              if (state) X() ;
-              pos += nbcat(fdcurrent) ;
-            }
-            else if (ie->mask & IN_CLOSE_WRITE)
-            {
-              if (state) X() ;
-              fd_close(fdcurrent) ;
-              fdcurrent = -1 ;
-              pos = 0 ;
-              state = B_WAITING ;
-            }
-            else if (ie->mask & IN_CREATE)
-            {
-              if (!state) X() ;
-              fdcurrent = open_readb("current") ;
-              if (fdcurrent < 0)
-              {
-                if (errno != ENOENT) strerr_diefu1sys(111, "open_readb current") ;
-                else goto cont ;
-              }
-              pos = nbcat(fdcurrent) ;
-              state = B_TAILING ;
-            }
-           cont:
-            i += sizeof(struct inotify_event) + ie->len ;
-          }
-        }
-      }
+      if (!buffer_flush(buffer_1) && !error_isagain(errno))
+        strerr_diefu1sys(111, "write to stdout") ;
     }
+    if (state == B_READING && buffer_available(buffer_1))
+    {
+      if (!readit(fd)) strerr_diefu3sys(111, "read from ", dir, "/current") ;
+    }
+    if (x[0].revents & IOPAUSE_READ) handle_event(x[0].fd, watch) ;
   }
   return 0 ;
 }
