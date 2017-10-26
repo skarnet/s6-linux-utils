@@ -187,6 +187,7 @@ int main (int argc, char const *const *argv, char const *const *envp)
   char const *linevar = 0 ;
   stralloc sa = STRALLOC_ZERO ;
   PROG = "s6-uevent-spawner" ;
+  strerr_warnw1x("this program is deprecated, see https://skarnet.org/software/mdevd/") ;
   {
     subgetopt_t l = SUBGETOPT_ZERO ;
     for (;;)

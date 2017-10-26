@@ -1,5 +1,14 @@
 Changelog for s6-linux-utils.
 
+In 2.4.0.2
+----------
+
+ - s6-logwatch rewrite.
+ - Better portability with old glibc versions.
+ - s6-uevent-listener and s6-uevent-spawner are marked as
+deprecated. (The mdevd package obsoletes them.)
+
+
 In 2.4.0.1
 ----------
 

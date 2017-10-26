@@ -123,6 +123,7 @@ int main (int argc, char const *const *argv, char const *const *envp)
 {
   iopause_fd x[3] = { { .events = IOPAUSE_READ }, { .fd = 1 }, { .fd = 0 } } ;
   PROG = "s6-uevent-listener" ;
+  strerr_warnw1x("this program is deprecated, see https://skarnet.org/software/mdevd/") ;
   {
     unsigned int kbufsz = 65536 ;
     subgetopt_t l = SUBGETOPT_ZERO ;
