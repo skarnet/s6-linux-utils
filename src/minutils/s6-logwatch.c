@@ -129,6 +129,7 @@ int main (int argc, char const *const *argv)
 
   if (argc) dir = *argv ;
   if (chdir(dir) < 0) strerr_diefu2sys(111, "chdir to ", dir) ;
+  if (!fd_sanitize()) strerr_diefu1sys(111, "sanitize standard fds") ;
 
   x[0].fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC) ;
   if (x[0].fd < 0) strerr_diefu1sys(111, "inotify_init") ;
@@ -159,6 +160,7 @@ int main (int argc, char const *const *argv)
     {
       if (!buffer_flush(buffer_1) && !error_isagain(errno))
         strerr_diefu1sys(111, "write to stdout") ;
+      if (x[1].revents & IOPAUSE_EXCEPT) break ;
     }
     if (state == B_READING && buffer_available(buffer_1))
     {
