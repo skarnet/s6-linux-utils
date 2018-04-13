@@ -42,10 +42,27 @@ static void scanopt (stralloc *data, unsigned long *flags, char const *opt)
       CASE("atime") { *flags &= ~MS_NOATIME ; break ; }
       CASE("nodiratime") { *flags |= MS_NODIRATIME ; break ; }
       CASE("diratime") { *flags &= ~MS_NODIRATIME ; break ; }
+      CASE("strictatime") { *flags |= MS_STRICTATIME ; break ; }
+      CASE("nostrictatime") { *flags &= ~MS_STRICTATIME ; break ; }
       CASE("bind") { *flags |= MS_BIND ; break ; }
       CASE("nobind") { *flags &= ~MS_BIND ; break ; }
       CASE("move") { *flags |= MS_MOVE ; break ; }
       CASE("nomove") { *flags &= ~MS_MOVE ; break ; }
+      CASE("dirsync") { *flags |= MS_DIRSYNC ; break ; }
+      CASE("nodirsync") { *flags &= ~MS_DIRSYNC ; break ; }
+      CASE("mandlock") { *flags |= MS_MANDLOCK ; break ; }
+      CASE("nomandlock") { *flags &= ~MS_MANDLOCK ; break ; }
+      CASE("silent") { *flags |= MS_SILENT ; break ; }
+      CASE("nosilent") { *flags &= ~MS_SILENT ; break ; }
+#ifdef MS_LAZYTIME
+      CASE("lazytime") { *flags |= MS_LAZYTIME ; break ; }
+      CASE("nolazytime") { *flags &= ~MS_LAZYTIME ; break ; }
+#endif
+
+      CASE("shared") { *flags &= ~(MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE) ; *flags |= MS_SHARED ; break ; }
+      CASE("private") { *flags &= ~(MS_SHARED | MS_SLAVE | MS_UNBINDABLE) ; *flags |= MS_PRIVATE ; break ; }
+      CASE("slave") { *flags &= ~(MS_SHARED | MS_PRIVATE | MS_UNBINDABLE) ; *flags |= MS_SLAVE ; break ; }
+      CASE("unbindable") { *flags &= ~(MS_SHARED | MS_PRIVATE | MS_SLAVE) ; *flags |= MS_UNBINDABLE ; break ; }
 
         if ((data->s && data->len && !stralloc_catb(data, ",", 1)) || !stralloc_catb(data, opt, n))
           strerr_diefu1sys(111, "build data string") ;
