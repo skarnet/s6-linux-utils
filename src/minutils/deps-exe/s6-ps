@@ -5,4 +5,6 @@ s6ps_pwcache.o
 s6ps_grcache.o
 s6ps_ttycache.o
 s6ps_wchan.o
+${LIBNSSS}
 -lskarnet
+${MAYBEPTHREAD_LIB}

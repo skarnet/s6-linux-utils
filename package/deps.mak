@@ -40,8 +40,8 @@ s6-mount: EXTRA_LIBS :=
 s6-mount: src/minutils/s6-mount.o -lskarnet
 s6-pivotchroot: EXTRA_LIBS :=
 s6-pivotchroot: src/minutils/s6-pivotchroot.o -lskarnet
-s6-ps: EXTRA_LIBS :=
-s6-ps: src/minutils/s6-ps.o src/minutils/s6ps_statparse.o src/minutils/s6ps_otree.o src/minutils/s6ps_pfield.o src/minutils/s6ps_pwcache.o src/minutils/s6ps_grcache.o src/minutils/s6ps_ttycache.o src/minutils/s6ps_wchan.o -lskarnet
+s6-ps: EXTRA_LIBS := ${MAYBEPTHREAD_LIB}
+s6-ps: src/minutils/s6-ps.o src/minutils/s6ps_statparse.o src/minutils/s6ps_otree.o src/minutils/s6ps_pfield.o src/minutils/s6ps_pwcache.o src/minutils/s6ps_grcache.o src/minutils/s6ps_ttycache.o src/minutils/s6ps_wchan.o ${LIBNSSS} -lskarnet
 s6-swapoff: EXTRA_LIBS :=
 s6-swapoff: src/minutils/s6-swapoff.o -lskarnet
 s6-swapon: EXTRA_LIBS :=
