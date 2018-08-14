@@ -1,9 +1,10 @@
 Changelog for s6-linux-utils.
 
-In 2.4.0.3
+In 2.5.0.0
 ----------
 
- - nsss support.
+ - Optional nsss support.
+ - s6-devd, s6-uevent-listener, s6-uevent-spawner removed.
 
 
 In 2.4.0.2

@@ -1,8 +1,5 @@
 BIN_TARGETS := \
 s6-chroot \
-s6-devd \
-s6-uevent-listener \
-s6-uevent-spawner \
 s6-fillurandompool \
 s6-freeramdisk \
 s6-hostname \
