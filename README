@@ -3,16 +3,15 @@ s6-linux-utils - tiny Linux-specific utilities
 
 s6-linux-utils is a set of tiny Linux-specific utilities,
 often performing well-known tasks such as mount and swapon
- but optimized for simplicity and small size. They were
+but optimized for simplicity and small size. They were
 designed for embedded systems and other constrained
 environments, but they work on any Linux system.
 
  Of particular interest in this package are the following
 programs:
- - s6-devd, a minimal udevd implementation
  - s6-ps, an independent ps implementation
 
- See http://skarnet.org/software/s6-linux-utils/ for details.
+ See https://skarnet.org/software/s6-linux-utils/ for details.
 
 
 * Installation
