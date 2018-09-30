@@ -1,5 +1,11 @@
 Changelog for s6-linux-utils.
 
+In 2.5.0.1
+----------
+
+ - Build fix for clang.
+
+
 In 2.5.0.0
 ----------
 

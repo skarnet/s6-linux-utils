@@ -286,20 +286,19 @@ int main (int argc, char const *const *argv)
     /* Order the processes for display */
 
     {
-      AVLTREEB_TYPE(n+1) pidtree ;
-      avltreeb_init(&pidtree, n+1, &pid_dtok, &uint32_cmp, p) ;
+      AVLTREEN_DECLARE_AND_INIT(pidtree, n+1, &pid_dtok, &uint32_cmp, p) ;
       for (i = 0 ; i < n ; i++)
       {
         if (needstat && !s6ps_statparse(p+i))
           strerr_diefu1sys(111, "parse process stats") ;
-        if (!avltreeb_insert(&pidtree, i))
-          strerr_diefu1sys(111, "avltreeb_insert") ;
+        if (!avltreen_insert(&pidtree, i))
+          strerr_diefu1sys(111, "avltreen_insert") ;
       }
-      if (!avltreeb_insert(&pidtree, n))
-        strerr_diefu1sys(111, "avltreeb_insert") ;
+      if (!avltreen_insert(&pidtree, n))
+        strerr_diefu1sys(111, "avltreen_insert") ;
 
-      if (flagtree) s6ps_otree(p, n+1, &pidtree.info, orderedlist) ;
-      else avltreeb_iter_nocancel(&pidtree, avltreeb_totalsize(&pidtree), &fillo_notree, orderedlist) ;
+      if (flagtree) s6ps_otree(p, n+1, &pidtree, orderedlist) ;
+      else avltreen_iter_nocancel(&pidtree, avltreen_totalsize(&pidtree), &fillo_notree, orderedlist) ;
     }
 
 
