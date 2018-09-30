@@ -36,6 +36,16 @@
  <li> <tt>s6-mount</tt> does not touch <tt>/etc/mtab</tt>. </li>
 </ul>
 
+<h2> Exit codes </h2>
+
+<ul>
+ <li> 0: success </li>
+ <li> 1: <tt>mount()</tt> returned <tt>-EBUSY</tt> &mdash; most likely, the filesystem is already mounted </li>
+ <li> 100: wrong usage </li>
+ <li> 111: system call failed </li>
+ <li> <em>n</em>: <tt>s6-mount -a</tt> was called, and <em>n</em> fstab entries couldn't be mounted </li>
+</ul>
+
 <h2> Options </h2>
 
 <ul>
