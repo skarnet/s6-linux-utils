@@ -4,6 +4,8 @@ In 2.5.0.1
 ----------
 
  - Build fix for clang.
+ - Adaptation to skalibs-2.8.0.0.
+ - Everything now builds as PIC by default.
 
 
 In 2.5.0.0
