@@ -306,7 +306,7 @@ int main (int argc, char const *const *argv)
 
     if (fbf & ((1 << PFIELD_START) | ((uint64)1 << PFIELD_TSTART) | (1 << PFIELD_PCPU) | ((uint64)1 << PFIELD_CPCPU)))
     {
-      tain_now_g() ;
+      tain_wallclock_read_g() ;
       s6ps_compute_boottime(p, mypos) ;
     }
     if (fbf & (1 << PFIELD_USER) && !s6ps_pwcache_init())
