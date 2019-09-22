@@ -2,9 +2,10 @@ s6-linux-utils - tiny Linux-specific utilities
 ----------------------------------------------
 
 s6-linux-utils is a set of tiny Linux-specific utilities,
-often performing well-known tasks such as mount and swapon
-but optimized for simplicity and small size. They were
-designed for embedded systems and other constrained
+some performing well-known tasks such as mount and swapon,
+other being nonstandard but typically useful for a s6-based
+system. They have been optimized for simplicity and small size.
+They were designed for embedded systems and other constrained
 environments, but they work on any Linux system.
 
  Of particular interest in this package are the following
