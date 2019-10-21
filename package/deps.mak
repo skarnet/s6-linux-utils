@@ -21,25 +21,25 @@ src/minutils/s6ps_statparse.o src/minutils/s6ps_statparse.lo: src/minutils/s6ps_
 src/minutils/s6ps_ttycache.o src/minutils/s6ps_ttycache.lo: src/minutils/s6ps_ttycache.c src/minutils/s6-ps.h
 src/minutils/s6ps_wchan.o src/minutils/s6ps_wchan.lo: src/minutils/s6ps_wchan.c src/minutils/s6-ps.h
 
-s6-chroot: EXTRA_LIBS :=
-s6-chroot: src/minutils/s6-chroot.o -lskarnet
-s6-fillurandompool: EXTRA_LIBS :=
-s6-fillurandompool: src/minutils/s6-fillurandompool.o -lskarnet
-s6-freeramdisk: EXTRA_LIBS :=
-s6-freeramdisk: src/minutils/s6-freeramdisk.o -lskarnet
-s6-hostname: EXTRA_LIBS :=
-s6-hostname: src/minutils/s6-hostname.o -lskarnet
-s6-logwatch: EXTRA_LIBS :=
-s6-logwatch: src/minutils/s6-logwatch.o -lskarnet
-s6-mount: EXTRA_LIBS :=
-s6-mount: src/minutils/s6-mount.o -lskarnet
-s6-pivotchroot: EXTRA_LIBS :=
-s6-pivotchroot: src/minutils/s6-pivotchroot.o -lskarnet
-s6-ps: EXTRA_LIBS := ${MAYBEPTHREAD_LIB}
-s6-ps: src/minutils/s6-ps.o src/minutils/s6ps_statparse.o src/minutils/s6ps_otree.o src/minutils/s6ps_pfield.o src/minutils/s6ps_pwcache.o src/minutils/s6ps_grcache.o src/minutils/s6ps_ttycache.o src/minutils/s6ps_wchan.o ${LIBNSSS} -lskarnet
-s6-swapoff: EXTRA_LIBS :=
-s6-swapoff: src/minutils/s6-swapoff.o -lskarnet
-s6-swapon: EXTRA_LIBS :=
-s6-swapon: src/minutils/s6-swapon.o -lskarnet
-s6-umount: EXTRA_LIBS :=
-s6-umount: src/minutils/s6-umount.o -lskarnet
+s6-chroot: EXTRA_LIBS := -lskarnet
+s6-chroot: src/minutils/s6-chroot.o
+s6-fillurandompool: EXTRA_LIBS := -lskarnet
+s6-fillurandompool: src/minutils/s6-fillurandompool.o
+s6-freeramdisk: EXTRA_LIBS := -lskarnet
+s6-freeramdisk: src/minutils/s6-freeramdisk.o
+s6-hostname: EXTRA_LIBS := -lskarnet
+s6-hostname: src/minutils/s6-hostname.o
+s6-logwatch: EXTRA_LIBS := -lskarnet
+s6-logwatch: src/minutils/s6-logwatch.o
+s6-mount: EXTRA_LIBS := -lskarnet
+s6-mount: src/minutils/s6-mount.o
+s6-pivotchroot: EXTRA_LIBS := -lskarnet
+s6-pivotchroot: src/minutils/s6-pivotchroot.o
+s6-ps: EXTRA_LIBS := -lskarnet ${MAYBEPTHREAD_LIB}
+s6-ps: src/minutils/s6-ps.o src/minutils/s6ps_statparse.o src/minutils/s6ps_otree.o src/minutils/s6ps_pfield.o src/minutils/s6ps_pwcache.o src/minutils/s6ps_grcache.o src/minutils/s6ps_ttycache.o src/minutils/s6ps_wchan.o ${LIBNSSS}
+s6-swapoff: EXTRA_LIBS := -lskarnet
+s6-swapoff: src/minutils/s6-swapoff.o
+s6-swapon: EXTRA_LIBS := -lskarnet
+s6-swapon: src/minutils/s6-swapon.o
+s6-umount: EXTRA_LIBS := -lskarnet
+s6-umount: src/minutils/s6-umount.o
