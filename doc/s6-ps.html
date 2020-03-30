@@ -69,57 +69,56 @@ recognized <em>field</em> keywords and the corresponding field they display.
 </p>
 
 <ul>
- <li> <tt>pid</tt>&nbsp: the process id number. </li>
- <li> <tt>comm</tt>&nbsp: the command name as known by the kernel. </li>
- <li> <tt>s</tt>&nbsp: the one-character state of the process, then <tt>s</tt>
+ <li> <tt>pid</tt>&nbsp;: the process id number. </li>
+ <li> <tt>comm</tt>&nbsp;: the command name as known by the kernel. </li>
+ <li> <tt>s</tt>&nbsp;: the one-character state of the process, then <tt>s</tt>
 if the process is a session leader or <tt>+</tt> if it is a foreground
 process group leader, then <tt>N</tt> if
 the process is niced or <tt>&lt;</tt> if it is anti-niced. Unlike ps, s6-ps
 cannot tell whether a process has locked memory pages or not. </li>
- <li> <tt>ppid</tt>&nbsp: the parent process' pid. </li>
- <li> <tt>pgrp</tt>&nbsp: the process group number. </li>
- <li> <tt>sess</tt>&nbsp: the session leader's pid. </li>
- <li> <tt>tty</tt>&nbsp: the name of the process's controlling terminal.</li>
- <li> <tt>tpgid</tt>&nbsp: the pid of the foreground process group. </li>
- <li> <tt>utime</tt>&nbsp: the time the process spent in user mode. </li>
- <li> <tt>stime</tt>&nbsp: the time the process spent in kernel mode. </li>
- <li> <tt>cutime</tt>&nbsp: the time spent in user mode by the process <em>and</em>
+ <li> <tt>ppid</tt>&nbsp;: the parent process' pid. </li>
+ <li> <tt>pgrp</tt>&nbsp;: the process group number. </li>
+ <li> <tt>sess</tt>&nbsp;: the session leader's pid. </li>
+ <li> <tt>tty</tt>&nbsp;: the name of the process's controlling terminal.</li>
+ <li> <tt>tpgid</tt>&nbsp;: the pid of the foreground process group. </li>
+ <li> <tt>utime</tt>&nbsp;: the time the process spent in user mode. </li>
+ <li> <tt>stime</tt>&nbsp;: the time the process spent in kernel mode. </li>
+ <li> <tt>cutime</tt>&nbsp;: the time spent in user mode by the process <em>and</em>
 all its dead children. </li>
- <li> <tt>cstime</tt>&nbsp: the time spent in kernel mode by the process <em>and</em>
+ <li> <tt>cstime</tt>&nbsp;: the time spent in kernel mode by the process <em>and</em>
 all its dead children. </li>
- <li> <tt>prio</tt>&nbsp: the process' priority as computed by the kernel. </li>
- <li> <tt>nice</tt>&nbsp: the process' nice value. </li>
- <li> <tt>thcount</tt>&nbsp: the number of threads in the process. </li>
- <li> <tt>start</tt>&nbsp: the start time of the process. </li>
- <li> <tt>vsize</tt>&nbsp: the virtual memory size of the process. </li>
- <li> <tt>rss</tt>&nbsp: the resident set size of the process. </li>
- <li> <tt>rsslimit</tt>&nbsp: the maximum rss allowed for the process. </li>
- <li> <tt>psr</tt>&nbsp: the number of the CPU  the process is running on. </li>
- <li> <tt>rtprio</tt>&nbsp: the real-time priority of the process. </li>
- <li> <tt>policy</tt>&nbsp: the real-time policy of the process - a symbolic name. </li>
- <li> <tt>user</tt>&nbsp: the user the process is running as. </li>
- <li> <tt>group</tt>&nbsp: the group the process is running as. </li>
- <li> <tt>pmem</tt>&nbsp: the percentage of the available virtual memory the process
+ <li> <tt>prio</tt>&nbsp;: the process' priority as computed by the kernel. </li>
+ <li> <tt>nice</tt>&nbsp;: the process' nice value. </li>
+ <li> <tt>thcount</tt>&nbsp;: the number of threads in the process. </li>
+ <li> <tt>start</tt>&nbsp;: the start time of the process. </li>
+ <li> <tt>vsize</tt>&nbsp;: the virtual memory size of the process. </li>
+ <li> <tt>rss</tt>&nbsp;: the resident set size of the process. </li>
+ <li> <tt>rsslimit</tt>&nbsp;: the maximum rss allowed for the process. </li>
+ <li> <tt>psr</tt>&nbsp;: the number of the CPU  the process is running on. </li>
+ <li> <tt>rtprio</tt>&nbsp;: the real-time priority of the process. </li>
+ <li> <tt>policy</tt>&nbsp;: the real-time policy of the process - a symbolic name. </li>
+ <li> <tt>user</tt>&nbsp;: the user the process is running as. </li>
+ <li> <tt>group</tt>&nbsp;: the group the process is running as. </li>
+ <li> <tt>pmem</tt>&nbsp;: the percentage of the available virtual memory the process
 is using. Be aware that it is a very rough estimate: determining exactly how much memory
 a process is using is a complex task. </li>
- <li> <tt>wchan</tt>&nbsp: the name or address of the kernel function where the
+ <li> <tt>wchan</tt>&nbsp;: the name or address of the kernel function where the
 proces is sleeping. It is actually very rare that a kernel is configured to properly
 export that value, because it incurs a small performance cost. </li>
- <li> <tt>args</tt>&nbsp: the command line of the process. </li>
- <li> <tt>env</tt>&nbsp: the process environment. s6-ps can normally only print
+ <li> <tt>args</tt>&nbsp;: the command line of the process. </li>
+ <li> <tt>env</tt>&nbsp;: the process environment. s6-ps can normally only print
 the environment for processes running as the same user, or if it is run as root.
 Be aware that the environment is usually quite large, and will create very long
 lines, likely to mess up the display on a standard terminal. </li>
-</li>
- <li> <tt>pcpu</tt>&nbsp: the percentage of CPU used by the process (total cpu time
+ <li> <tt>pcpu</tt>&nbsp;: the percentage of CPU used by the process (total cpu time
 divided by total running time). It is a mean value and does not reflect current CPU
 usage. </li>
- <li> <tt>ttime</tt>&nbsp: total CPU time used by the process (user + kernel mode). </li>
- <li> <tt>cttime</tt>&nbsp: total CPU time used by the process and all its dead
+ <li> <tt>ttime</tt>&nbsp;: total CPU time used by the process (user + kernel mode). </li>
+ <li> <tt>cttime</tt>&nbsp;: total CPU time used by the process and all its dead
 children (user + kernel mode). </li>
- <li> <tt>tstart</tt>&nbsp: the start time of the process as a
+ <li> <tt>tstart</tt>&nbsp;: the start time of the process as a
 <a href="http://cr.yp.to/libtai/tai64.html">TAI64N</a> value. </li>
- <li> <tt>cpcpu</tt>&nbsp: the percentage of CPU used by the process and its dead
+ <li> <tt>cpcpu</tt>&nbsp;: the percentage of CPU used by the process and its dead
 children (total cpu time
 divided by total running time). It is a mean value and does not reflect current CPU
 usage. </li>
