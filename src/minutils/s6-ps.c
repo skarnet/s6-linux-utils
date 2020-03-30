@@ -46,7 +46,7 @@
   (1 << PFIELD_RTPRIO) | \
   (1 << PFIELD_PMEM) | \
   (1 << PFIELD_PCPU) | \
-  ((uint64)1 << PFIELD_CPCPU))
+  ((uint64_t)1 << PFIELD_CPCPU))
 
 void *left_dtok (unsigned int d, void *x)
 {
@@ -93,12 +93,12 @@ static inline unsigned int fieldscan (char const *s, pfield_t *list, uint64_t *f
       for (; i < PFIELD_PHAIL ; i++) if (!strcmp(tmp, s6ps_opttable[i])) break ;
       if (i >= PFIELD_PHAIL)
         strerr_dief4x(100, "invalid", " field for -o option", ": ", tmp) ;
-      if (bits & (1 << i))
+      if (bits & ((uint64_t)1 << i))
         strerr_dief4x(100, "duplicate", " field for -o option", ": ", tmp) ;
     }
     s += len + 1 ;
     list[n] = i ;
-    bits |= (1 << i) ;
+    bits |= ((uint64_t)1 << i) ;
   }
   *fbf = bits ;
   return n ;
@@ -142,7 +142,7 @@ int main (int argc, char const *const *argv)
         case 'l' :
         {
           nfields = 11 ;
-          fbf = (1 << PFIELD_USER) | (1 << PFIELD_PID) | ((uint64)1 << PFIELD_CPCPU) | (1 << PFIELD_PMEM) | (1 << PFIELD_VSIZE) | (1 << PFIELD_RSS) | (1 << PFIELD_TTY) | (1 << PFIELD_STATE) | (1 << PFIELD_START) | (1 << PFIELD_CTTIME) | (1 << PFIELD_ARGS) ;
+          fbf = (1 << PFIELD_USER) | (1 << PFIELD_PID) | ((uint64_t)1 << PFIELD_CPCPU) | (1 << PFIELD_PMEM) | (1 << PFIELD_VSIZE) | (1 << PFIELD_RSS) | (1 << PFIELD_TTY) | (1 << PFIELD_STATE) | (1 << PFIELD_START) | (1 << PFIELD_CTTIME) | (1 << PFIELD_ARGS) ;
           fieldlist[0] = PFIELD_USER ;
           fieldlist[1] = PFIELD_PID ;
           fieldlist[2] = PFIELD_CPCPU ;
@@ -204,8 +204,8 @@ int main (int argc, char const *const *argv)
    (1 << PFIELD_PCPU) |
    (1 << PFIELD_TTIME) |
    (1 << PFIELD_CTTIME) |
-   ((uint64)1 << PFIELD_TSTART) |
-   ((uint64)1 << PFIELD_CPCPU))) ;
+   ((uint64_t)1 << PFIELD_TSTART) |
+   ((uint64_t)1 << PFIELD_CPCPU))) ;
 
 
  /* Scan /proc */
@@ -304,7 +304,7 @@ int main (int argc, char const *const *argv)
 
    /* Format, compute length, output */
 
-    if (fbf & ((1 << PFIELD_START) | ((uint64)1 << PFIELD_TSTART) | (1 << PFIELD_PCPU) | ((uint64)1 << PFIELD_CPCPU)))
+    if (fbf & ((1 << PFIELD_START) | ((uint64_t)1 << PFIELD_TSTART) | (1 << PFIELD_PCPU) | ((uint64_t)1 << PFIELD_CPCPU)))
     {
       tain_wallclock_read_g() ;
       s6ps_compute_boottime(p, mypos) ;
