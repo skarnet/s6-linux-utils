@@ -40,13 +40,13 @@
  Reading from <tt>/dev/random</tt> blocks when its entropy pool is
 not full enough, so it will never return weak random data. (Reading
 from <tt>/dev/random</tt> is overkill anyway, and
-<a href="http://sockpuppet.org/blog/2014/02/25/safely-generate-random-numbers/">you
+<a href="https://sockpuppet.org/blog/2014/02/25/safely-generate-random-numbers/">you
 should not be doing it.</a>)
 </p>
 
 <p>
  However, reading from <tt>/dev/urandom</tt> (which
-<a href="http://www.2uo.de/myths-about-urandom/">you should be doing</a>)
+<a href="https://www.2uo.de/myths-about-urandom/">you should be doing</a>)
 will not block, even though the entropy pool may not have been
 initialized yet. That's the only insecure thing about it: at boot time,
 <tt>/dev/urandom</tt> may return weak random data, until its entropy
@@ -66,7 +66,7 @@ random data, until the machine shuts down.
 <ul>
  <li> <tt>s6-fillurandompool</tt> will only work on a Linux kernel version
 3.17 or later: this is when the
-<a href="http://man7.org/linux/man-pages/man2/getrandom.2.html"><tt>getrandom()</tt></a>
+<a href="https://man7.org/linux/man-pages/man2/getrandom.2.html"><tt>getrandom()</tt></a>
 system call, which it internally uses, has been implemented. </li>
 </ul>
 
