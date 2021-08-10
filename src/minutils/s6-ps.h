@@ -140,10 +140,10 @@ extern void s6ps_otree (pscan_t *, unsigned int, avltreen *, unsigned int *) ;
 
 extern int s6ps_compute_boottime (pscan_t *, unsigned int) ;
 
-typedef int pfieldfmt_func_t (pscan_t *, size_t *, size_t *) ;
-typedef pfieldfmt_func_t *pfieldfmt_func_t_ref ;
+typedef int pfieldfmt_func (pscan_t *, size_t *, size_t *) ;
+typedef pfieldfmt_func *pfieldfmt_func_ref ;
 
-extern pfieldfmt_func_t_ref *s6ps_pfield_fmt ;
+extern pfieldfmt_func_ref *s6ps_pfield_fmt ;
 
 extern void *left_dtok (unsigned int, void *) ;
 extern int uint32_cmp (void const *, void const *, void *) ;

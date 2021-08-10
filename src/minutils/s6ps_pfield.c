@@ -91,7 +91,7 @@ static char const *const opttable[PFIELD_PHAIL] =
 
 char const *const *s6ps_opttable = opttable ;
 
-static tain_t boottime = TAIN_EPOCH ;
+static tain boottime = TAIN_EPOCH ;
 
 static int fmt_64 (pscan_t *p, size_t *pos, size_t *len, uint64_t u)
 {                                                          
@@ -204,7 +204,7 @@ int s6ps_compute_boottime (pscan_t *p, unsigned int mypos)
   else
   {
     unsigned int hz = gethz() ;
-    tain_t offset = { .sec = { .x = p[mypos].start / hz }, .nano = (p[mypos].start % hz) * (1000000000 / hz) } ;
+    tain offset = { .sec = { .x = p[mypos].start / hz }, .nano = (p[mypos].start % hz) * (1000000000 / hz) } ;
     tain_sub(&boottime, &STAMP, &offset) ;
     return 1 ;
   }
@@ -309,7 +309,7 @@ static int fmt_start (pscan_t *p, size_t *pos, size_t *len)
 {
   struct tm starttm ;
   unsigned int hz = gethz() ;
-  tain_t blah = { .sec = { .x = p->start / hz }, .nano = (p->start % hz) * (1000000000 / hz) } ;
+  tain blah = { .sec = { .x = p->start / hz }, .nano = (p->start % hz) * (1000000000 / hz) } ;
   tain_add(&blah, &boottime, &blah) ;
   if (!localtm_from_tai(&starttm, tain_secp(&blah), 1)) return 0 ;
   return fmt_timedate(p, pos, len, &starttm) ;
@@ -479,7 +479,7 @@ static int fmt_env (pscan_t *p, size_t *pos, size_t *len)
 
 static uint64_t gettotalj (uint64_t j)
 {
-  tain_t totaltime ;
+  tain totaltime ;
   unsigned int hz = gethz() ;
   tain_sub(&totaltime, &STAMP, &boottime) ;
   j = totaltime.sec.x * hz + totaltime.nano / (1000000000 / hz) - j ;
@@ -506,7 +506,7 @@ static int fmt_cttime (pscan_t *p, size_t *pos, size_t *len)
 static int fmt_tstart (pscan_t *p, size_t *pos, size_t *len)
 {
   unsigned int hz = gethz() ;
-  tain_t blah = { .sec = { .x = p->start / hz }, .nano = (p->start % hz) * (1000000000 / hz) } ;
+  tain blah = { .sec = { .x = p->start / hz }, .nano = (p->start % hz) * (1000000000 / hz) } ;
   if (!stralloc_readyplus(&p->data, TIMESTAMP)) return 0 ;
   tain_add(&blah, &boottime, &blah) ;
   *pos = p->data.len ;
@@ -520,7 +520,7 @@ static int fmt_cpcpu (pscan_t *p, size_t *pos, size_t *len)
   return percent(&p->data, 10000 * (p->utime + p->stime + p->cutime + p->cstime) / gettotalj(p->start), pos, len) ;
 }
 
-static pfieldfmt_func_t_ref pfieldfmt_table[PFIELD_PHAIL] =
+static pfieldfmt_func_ref pfieldfmt_table[PFIELD_PHAIL] =
 {
   &fmt_pid,
   &fmt_comm,
@@ -557,4 +557,4 @@ static pfieldfmt_func_t_ref pfieldfmt_table[PFIELD_PHAIL] =
   &fmt_cpcpu
 } ;
 
-pfieldfmt_func_t_ref *s6ps_pfield_fmt = pfieldfmt_table ;
+pfieldfmt_func_ref *s6ps_pfield_fmt = pfieldfmt_table ;

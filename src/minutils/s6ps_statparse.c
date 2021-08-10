@@ -17,8 +17,8 @@
 
 #define STATVARS 49
 
-typedef size_t scanfunc_t (char const *, void *) ;
-typedef scanfunc_t *scanfunc_t_ref ;
+typedef size_t sca$1_func (char const *, void *) ;
+typedef sca$1_func *sca$1_func_ref ;
 
 static size_t f64 (char const *s, void *u64)
 {
@@ -48,7 +48,7 @@ DEFUNS(fint, int)
 DEFUNS(fpid, pid_t)
 DEFUNU(fdev, dev_t)
 
-static scanfunc_t_ref scanfuncs[STATVARS] =
+static sca$1_func_ref scanfuncs[STATVARS] =
 {
   &fpid, /* ppid */
   &fpid, /* pgrp */

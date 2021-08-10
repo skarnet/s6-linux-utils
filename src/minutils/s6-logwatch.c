@@ -110,7 +110,7 @@ int main (int argc, char const *const *argv)
   unsigned int maxlen = 4096 ;
   PROG = "s6-logwatch" ;
   {
-    subgetopt_t l = SUBGETOPT_ZERO ;
+    subgetopt l = SUBGETOPT_ZERO ;
     for (;;)
     {
       int opt = subgetopt_r(argc, argv, "m:", &l) ;
@@ -142,7 +142,7 @@ int main (int argc, char const *const *argv)
     state = B_WAITING ;
   }
   else state = B_READING ;
-  if (sig_ignore(SIGPIPE) == -1) strerr_diefu1sys(111, "sig_ignore(SIGPIPE)") ;
+  if (!sig_ignore(SIGPIPE)) strerr_diefu1sys(111, "sig_ignore(SIGPIPE)") ;
   if (state == B_READING)
   {
     if (!readit(fd)) strerr_diefu3sys(111, "read from ", dir, "/current") ;
