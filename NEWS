@@ -1,5 +1,11 @@
 Changelog for s6-linux-utils.
 
+In 2.5.1.8
+----------
+
+ - Adaptation to skalibs-2.12.0.0.
+
+
 In 2.5.1.7
 ----------
 
