@@ -1,9 +1,12 @@
 Changelog for s6-linux-utils.
 
-In 2.5.1.8
+In 2.6.0.0
 ----------
 
  - Adaptation to skalibs-2.12.0.0.
+ - s6-fillurandompool removed.
+ - New program: rngseed, replacing s6-fillurandompool, with
+a lot more features.
 
 
 In 2.5.1.7

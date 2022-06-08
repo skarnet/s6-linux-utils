@@ -1,0 +1,134 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="Content-Language" content="en" />
+    <title>s6-linux-utils: the rngseed program</title>
+    <meta name="Description" content="s6-linux-utils: the rngseed program" />
+    <meta name="Keywords" content="s6 linux administration root utilities rngseed random pool entropy getrandom seedrng secure random number generator" />
+    <!-- <link rel="stylesheet" type="text/css" href="//skarnet.org/default.css" /> -->
+  </head>
+<body>
+
+<p>
+<a href="index.html">s6-linux-utils</a><br />
+<a href="//skarnet.org/software/">Software</a><br />
+<a href="//skarnet.org/">skarnet.org</a>
+</p>
+
+<h1> The <tt>rngseed</tt> program </h1>
+
+<p>
+ <tt>rngseed</tt> manipulates the Linux kernel's entropy pool. It can seed
+the kernel's random number generator from a file, save a new seed into a
+file, wait until the entropy pool is full, and so on. Please read the
+options list carefully in order to use it in a secure way.
+</p>
+
+<p>
+ <tt>rngseed</tt> can only be run as root.
+</p>
+
+<h2> Interface </h2>
+
+<pre>
+     rngseed [ -r | -R ] [ -N | -n ] [ -w | -W ] [ -d <em>dir</em> ] [ -v <em>verbosity</em> ]
+</pre>
+
+<p>
+ The behaviour of rngseed depends on what options it is given. By default, it
+just waits until the entropy pool is full, then exits 0.
+</p>
+
+<h2> Options </h2>
+
+<h3> Configuration options </h3>
+
+<ul>
+ <li> <tt>-v&nbsp;<em>verbosity</em></tt>&nbsp;: be more or less verbose.
+Default is <tt>1</tt>, meaning rngseed will print warning and error
+messages. <tt>0</tt> will make it only print error messages, not warnings.
+<tt>2</tt> or more will make it add informational messages. </li>
+ <li> <tt>-d&nbsp;<em>dir</em></tt>&nbsp;: use <em>dir</em> as the
+directory where the seed file is located (for reading as well as writing).
+<em>dir</em> must be located on a writable, permanent filesystem.
+Default is <tt>/var/lib/rngseed</tt>. </li>
+</ul>
+
+<h3> Behaviour options </h3>
+
+<ul>
+ <li> <tt>-r</tt>&nbsp;: read from a seed file. rngseed will attempt to read
+some bits from <tt><em>dir</em>/seed</tt> and seed the kernel's RNG with the data.
+<em>dir</em> must be on a writable filesystem, because the seed file will be unlinked
+(the same data must not be used to seed the RNG twice). <tt>rngseed -r</tt> is
+typically used at boot time, in init scripts, right after mounting the
+filesystem where the seed has been saved. </li>
+ <li> <tt>-R</tt>&nbsp;: read from a seed file, ignoring creditability.
+Behaves like <tt>-r</tt>, but will not increase the entropy count of the
+kernel RNG even if the seed file is marked as creditable. </li>
+ <li> <tt>-w</tt>&nbsp;: write to a seed file. rngseed will save some
+random bits into <tt><em>dir</em>/seed</tt>, marking the seed as creditable if the
+RNG's entropy pool is fully initialized. <tt>rngseed -w</tt> is typically used at
+shutdown time, right before unmounting filesystems; the point is to store
+a seed on disk so it can be reused on next boot by <tt>rngseed -r</tt>. </li>
+ <li> <tt>-W</tt>&nbsp;: write to a seed file, without registering
+creditability. Behaves like <tt>-w</tt>, but does not mark the new seed
+file as creditable. </li>
+ <li> <tt>-N</tt>&nbsp;: block. After reading a seed file if required,
+and before writing a new seed file if required, rngseed will wait until the
+entropy pool is ready. This ensures that future readings of the kernel
+RNG will be cryptographically secure, and that new seed files will be
+creditable. This is the default. </li>
+ <li> <tt>-n</tt>&nbsp;: do not block. Immediately proceed even if the entropy
+pool is not ready. This may make a new seed file non-creditable. </li>
+</ul>
+
+<h2> Creditability </h2>
+
+<p>
+ A seed is said to be <em>creditable</em> if it has been obtained through a
+cryptographically secure RNG. This means it is safe from replay attacks, and
+safe to use to count towards the entropy pool when seeding the kernel RNG.
+<tt>rngseed -w</tt> will normally always create a creditable seed file,
+especially if used at shutdown time: by then, the kernel's entropy pool
+should have been initialized for a while.
+</p>
+
+<p>
+ An <em>uncreditable</em> seed can be used to add to the random pool, but
+should not increment the entropy count, because it is not safe from
+replay attacks. <tt>rngseed -r</tt> will do the right thing if the seed
+it reads is uncreditable.
+</p>
+
+<p>
+ <tt>rngseed</tt> uses the seed file's permissions to mark creditability.
+An uncreditable seed has rights 0600; a creditable seed has rights 0400.
+</p>
+
+<h2> Exit codes </h2>
+
+<ul>
+ <li> 0: success </li>
+ <li> 100: wrong usage </li>
+ <li> 111: system call failure </li>
+</ul>
+
+<h2> Notes </h2>
+
+<ul>
+ <li> <tt>rngseed -N</tt> replaces the old <tt>s6-fillurandompool</tt> program,
+that only waited for the entropy pool to get ready, but did not include any
+seed file management. </li>
+ <li> The options are named <tt>r</tt> and <tt>w</tt> from the <em>seed file</em>'s
+point of view.
+<tt>rngseed -r</tt> reads from the file (and unlinks it) and writes to the kernel
+RNG. <tt>rngseed -w</tt> reads from the kernel RNG and writes to the file. </li>
+ <li> <tt>rngseed</tt> is inspired by Jason Donenfeld's
+<a href="https://git.zx2c4.com/seedrng/about/">seedrng</a> program. It is,
+however, an independent implementation of the same concept. </li>
+</ul>
+
+</body>
+</html>

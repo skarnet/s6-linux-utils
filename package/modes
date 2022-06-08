@@ -1,5 +1,5 @@
+rngseed			0744
 s6-chroot		0744
-s6-fillurandompool	0755
 s6-freeramdisk		0744
 s6-hostname		0755
 s6-logwatch		0755

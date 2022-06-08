@@ -1,6 +1,6 @@
 BIN_TARGETS := \
+rngseed \
 s6-chroot \
-s6-fillurandompool \
 s6-freeramdisk \
 s6-hostname \
 s6-logwatch \
