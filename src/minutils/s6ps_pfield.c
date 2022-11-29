@@ -7,7 +7,7 @@
 #include <sys/sysinfo.h>
 #include <skalibs/uint64.h>
 #include <skalibs/types.h>
-#include <skalibs/strerr2.h>
+#include <skalibs/strerr.h>
 #include <skalibs/tai.h>
 #include <skalibs/djbtime.h>
 #include <skalibs/stralloc.h>

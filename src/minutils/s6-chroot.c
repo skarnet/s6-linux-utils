@@ -3,7 +3,7 @@
 #include <skalibs/nonposix.h>
 #include <unistd.h>
 
-#include <skalibs/strerr2.h>
+#include <skalibs/strerr.h>
 #include <skalibs/exec.h>
 
 #define USAGE "s6-chroot dir prog..."

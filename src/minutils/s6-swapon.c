@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <mntent.h>
-#include <skalibs/strerr2.h>
+#include <skalibs/strerr.h>
 
 #define USAGE "s6-swapon device <or> s6-swapon -a"
 

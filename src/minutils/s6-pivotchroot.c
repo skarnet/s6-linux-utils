@@ -3,7 +3,7 @@
 #include <skalibs/nonposix.h>
 #include <unistd.h>
 
-#include <skalibs/strerr2.h>
+#include <skalibs/strerr.h>
 #include <skalibs/exec.h>
 
 #define USAGE "s6-pivotchroot old-place-for-new-root new-place-for-old-root prog..."

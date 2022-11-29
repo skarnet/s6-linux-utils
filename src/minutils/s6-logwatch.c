@@ -10,7 +10,7 @@
 #include <skalibs/types.h>
 #include <skalibs/allreadwrite.h>
 #include <skalibs/sgetopt.h>
-#include <skalibs/strerr2.h>
+#include <skalibs/strerr.h>
 #include <skalibs/error.h>
 #include <skalibs/buffer.h>
 #include <skalibs/sig.h>
