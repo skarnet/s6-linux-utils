@@ -44,6 +44,8 @@ static void scanopt (stralloc *data, unsigned long *flags, char const *opt)
       CASE("diratime") { *flags &= ~MS_NODIRATIME ; break ; }
       CASE("strictatime") { *flags |= MS_STRICTATIME ; break ; }
       CASE("nostrictatime") { *flags &= ~MS_STRICTATIME ; break ; }
+      CASE("relatime") { *flags |= MS_RELATIME ; break ; }
+      CASE("norelatime") { *flags &= ~MS_RELATIME ; break ; }
       CASE("bind") { *flags |= MS_BIND ; break ; }
       CASE("nobind") { *flags &= ~MS_BIND ; break ; }
       CASE("move") { *flags |= MS_MOVE ; break ; }
