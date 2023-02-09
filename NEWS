@@ -1,5 +1,11 @@
 Changelog for s6-linux-utils.
 
+In 2.6.1.0
+----------
+
+ - s6-mount: support for relatime and norelatime options.
+
+
 In 2.6.0.1
 ----------
 
