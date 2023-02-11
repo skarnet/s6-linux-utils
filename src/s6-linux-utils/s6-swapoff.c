@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <sys/swap.h>
 #include <errno.h>
+
 #include <skalibs/bytestr.h>
 #include <skalibs/buffer.h>
 #include <skalibs/strerr.h>
@@ -13,18 +14,16 @@
 
 #define USAGE "s6-swapoff device <or> s6-swapoff -a"
 
-#define BUFSIZE 4095
-
-static int swapoffall ( )
+static int swapoffall (void)
 {
-  char buf[BUFSIZE+1] ;
+  char buf[4096] ;
   buffer b ;
   stralloc sa = STRALLOC_ZERO ;
   int e = 0 ;
   int r ;
   int fd = open_readb("/proc/swaps") ;
   if (fd < 0) strerr_diefu1sys(111, "open_readb /proc/swaps") ;
-  buffer_init(&b, &buffer_read, fd, buf, BUFSIZE+1) ;
+  buffer_init(&b, &buffer_read, fd, buf, 4096) ;
   if (skagetln(&b, &sa, '\n') < 0) strerr_diefu1sys(111, "skagetln") ;
   for (;;)
   {

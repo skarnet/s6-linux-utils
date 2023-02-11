@@ -5,12 +5,14 @@
 #include <unistd.h>
 #include <time.h>
 #include <sys/sysinfo.h>
+
 #include <skalibs/uint64.h>
 #include <skalibs/types.h>
 #include <skalibs/strerr.h>
 #include <skalibs/tai.h>
 #include <skalibs/djbtime.h>
 #include <skalibs/stralloc.h>
+
 #include "s6-ps.h"
 
 static char const *const fieldheaders[PFIELD_PHAIL] =
@@ -491,7 +493,6 @@ static int fmt_pcpu (pscan_t *p, size_t *pos, size_t *len)
 {
   return percent(&p->data, 10000 * (p->utime + p->stime) / gettotalj(p->start), pos, len) ;
 }
-
 
 static int fmt_ttime (pscan_t *p, size_t *pos, size_t *len) 
 {

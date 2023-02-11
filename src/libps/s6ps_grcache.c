@@ -1,6 +1,7 @@
 /* ISC license. */
 
 #include <stdint.h>
+
 #include <grp.h>
 #include <errno.h>
 #include <skalibs/types.h>
@@ -8,6 +9,7 @@
 #include <skalibs/genalloc.h>
 #include <skalibs/skamisc.h>
 #include <skalibs/avltree.h>
+
 #include "s6-ps.h"
 
 static avltree grcache_tree = AVLTREE_ZERO ;

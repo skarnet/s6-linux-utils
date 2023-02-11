@@ -1,0 +1,5 @@
+libs6ps.a.xyzzy
+${LIBNSSS}
+-lskarnet
+${SYSCLOCK_LIB}
+${MAYBEPTHREAD_LIB}

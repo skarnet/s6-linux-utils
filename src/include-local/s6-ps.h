@@ -1,10 +1,11 @@
 /* ISC license. */
 
-#ifndef _S6PS_H_
-#define _S6PS_H_
+#ifndef S6PS_H
+#define S6PS_H
 
 #include <sys/types.h>
 #include <stdint.h>
+
 #include <skalibs/uint64.h>
 #include <skalibs/stralloc.h>
 #include <skalibs/tai.h>
@@ -18,9 +19,6 @@ struct dius_s
   size_t right ;
 } ;
 #define DIUS_ZERO { .left = 0, .right = 0 }
-
-
- /* pfield: the output fields */
 
 typedef enum pfield_e pfield_t, *pfield_t_ref ;
 enum pfield_e
@@ -63,8 +61,6 @@ enum pfield_e
 
 extern char const *const *s6ps_opttable ;
 extern char const *const *s6ps_fieldheaders ;
-
- /* pscan: the main structure */
 
 typedef struct pscan_s pscan_t, *pscan_t_ref ;
 struct pscan_s

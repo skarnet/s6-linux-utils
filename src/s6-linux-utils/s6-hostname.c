@@ -1,11 +1,10 @@
 /* ISC license. */
 
-#ifndef _BSD_SOURCE
-#define _BSD_SOURCE
-#endif
+#include <skalibs/nonposix.h>
 
 #include <unistd.h>
 #include <string.h>
+
 #include <skalibs/allreadwrite.h>
 #include <skalibs/strerr.h>
 #include <skalibs/stralloc.h>
@@ -13,7 +12,7 @@
 
 #define USAGE "s6-hostname [ hostname ]"
 
-static int getit (void)
+static int hostname_getit (void)
 {
   stralloc sa = STRALLOC_ZERO ;
   if (sagethostname(&sa) < 0) strerr_diefu1sys(111, "get hostname") ;
@@ -23,7 +22,7 @@ static int getit (void)
   return 0 ;
 }
 
-static int setit (char const *h)
+static int hostname_setit (char const *h)
 {
   if (sethostname(h, strlen(h)) < 0)
     strerr_diefu1sys(111, "set hostname") ;
@@ -33,5 +32,5 @@ static int setit (char const *h)
 int main (int argc, char const *const *argv)
 {
   PROG = "s6-hostname" ;
-  return (argc < 2) ? getit() : setit(argv[1]) ;
+  return (argc < 2) ? hostname_getit() : hostname_setit(argv[1]) ;
 }

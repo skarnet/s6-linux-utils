@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 #include <errno.h>
+
 #include <skalibs/types.h>
 #include <skalibs/allreadwrite.h>
 #include <skalibs/buffer.h>
@@ -13,6 +14,7 @@
 #include <skalibs/djbunix.h>
 #include <skalibs/skamisc.h>
 #include <skalibs/avltree.h>
+
 #include "s6-ps.h"
 
 static avltree ttycache_tree = AVLTREE_ZERO ;

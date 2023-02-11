@@ -26,6 +26,7 @@
 #include <skalibs/skamisc.h>
 #include <skalibs/unix-transactional.h>
 #include <skalibs/avltreen.h>
+
 #include "s6-ps.h"
 
 #define USAGE "s6-ps [ -H ] [ -w spacing ] [ -W wchanfile ] [ -l | -o field,field... ]"

@@ -2,6 +2,7 @@
 
 #include <string.h>
 #include <sys/mount.h>
+
 #include <skalibs/bytestr.h>
 #include <skalibs/buffer.h>
 #include <skalibs/strerr.h>
@@ -11,13 +12,12 @@
 
 #define USAGE "s6-umount mountpoint <or> s6-umount -a"
 
-#define BUFSIZE 4096
-#define MAXLINES 512
+#define UMOUNTALL_MAXLINES 512
 
-static int umountall ( )
+static int umountall (void)
 {
-  stralloc mountpoints[MAXLINES] ;
-  char buf[BUFSIZE+1] ;
+  stralloc mountpoints[UMOUNTALL_MAXLINES] ;
+  char buf[4096] ;
   buffer b ;
   stralloc sa = STRALLOC_ZERO ;
   unsigned int line = 0 ;
@@ -26,11 +26,12 @@ static int umountall ( )
   int fd = open_readb("/proc/mounts") ;
   if (fd < 0) strerr_diefu1sys(111, "open /proc/mounts") ;
   memset(mountpoints, 0, sizeof(mountpoints)) ;
-  buffer_init(&b, &buffer_read, fd, buf, BUFSIZE+1) ;
+  buffer_init(&b, &buffer_read, fd, buf, 4096) ;
   for (;;)
   {
     size_t n, p ;
-    if (line >= MAXLINES) strerr_dief1x(111, "/proc/mounts too big") ;
+    if (line >= UMOUNTALL_MAXLINES)
+      strerr_dief1x(111, "/proc/mounts too big") ;
     sa.len = 0 ;
     r = skagetln(&b, &sa, '\n') ;
     if (r <= 0) break ;

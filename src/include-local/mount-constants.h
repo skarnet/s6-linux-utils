@@ -3,7 +3,7 @@
 #ifndef MOUNT_CONSTANTS_H
 #define MOUNT_CONSTANTS_H
 
-/* taken from util-linux-ng */
+/* taken from util-linux */
 
 #ifndef MS_RDONLY
 #define MS_RDONLY	 1	/* Mount read-only */
@@ -29,6 +29,9 @@
 #ifndef MS_DIRSYNC
 #define MS_DIRSYNC	128	/* Directory modifications are synchronous */
 #endif
+#ifndef MS_NOSYMFOLLOW
+#define MS_NOSYMFOLLOW	256	/* Don't follow symlinks */
+#endif
 #ifndef MS_NOATIME
 #define MS_NOATIME	0x400	/* 1024: Do not update access times. */
 #endif
@@ -44,38 +47,32 @@
 #ifndef MS_REC
 #define MS_REC		0x4000	/* 16384: Recursive loopback */
 #endif
-#ifndef MS_VERBOSE
-#define MS_VERBOSE	0x8000	/* 32768 */
-#endif
-#ifndef MS_RELATIME
-#define MS_RELATIME	0x200000 /* 200000: Update access times relative to mtime/ctime */
+#ifndef MS_SILENT
+#define MS_SILENT	0x8000	/* 32768: Don't emit certain kernel messages */
 #endif
 #ifndef MS_UNBINDABLE
-#define MS_UNBINDABLE	(1<<17)	/* 131072 unbindable */
+#define MS_UNBINDABLE	(1<<17)	/* 131072: Make unbindable */
 #endif
 #ifndef MS_PRIVATE
-#define MS_PRIVATE	(1<<18)	/* 262144 Private */
+#define MS_PRIVATE	(1<<18)	/* 262144: Make private */
 #endif
 #ifndef MS_SLAVE
-#define MS_SLAVE	(1<<19)	/* 524288 Slave */
+#define MS_SLAVE	(1<<19)	/* 524288: Make slave */
 #endif
 #ifndef MS_SHARED
-#define MS_SHARED	(1<<20)	/* 1048576 Shared */
+#define MS_SHARED	(1<<20)	/* 1048576: Make shared */
+#endif
+#ifndef MS_RELATIME
+#define MS_RELATIME	(1<<21) /* 2097152: Update atime relative to mtime/ctime */
 #endif
 #ifndef MS_I_VERSION
-#define MS_I_VERSION	(1<<23)	/* update inode I_version field */
+#define MS_I_VERSION	(1<<23)	/* Update the inode I_version field */
 #endif
 #ifndef MS_STRICTATIME
-#define MS_STRICTATIME	(1<<24) /* strict atime semantics */
+#define MS_STRICTATIME	(1<<24) /* Always perform atime updates */
 #endif
-/*
- * Magic mount flag number. Had to be or-ed to the flag values.
- */
-#ifndef MS_MGC_VAL
-#define MS_MGC_VAL 0xC0ED0000	/* magic flag number to indicate "new" flags */
-#endif
-#ifndef MS_MGC_MSK
-#define MS_MGC_MSK 0xffff0000	/* magic flag number mask */
+#ifndef MS_LAZYTIME
+#define MS_LAZYTIME     (1<<25) /* Update the on-disk [acm]times lazily */
 #endif
 
 #endif

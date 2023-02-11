@@ -12,4 +12,3 @@ s6-swapon \
 s6-umount
 
 LIBEXEC_TARGETS :=
-

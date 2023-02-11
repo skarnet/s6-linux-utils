@@ -2,10 +2,12 @@
 
 #include <string.h>
 #include <sys/utsname.h>
+
 #include <skalibs/uint64.h>
 #include <skalibs/stralloc.h>
 #include <skalibs/genalloc.h>
 #include <skalibs/djbunix.h>
+
 #include "s6-ps.h"
 
 static stralloc sysmap = STRALLOC_ZERO ;

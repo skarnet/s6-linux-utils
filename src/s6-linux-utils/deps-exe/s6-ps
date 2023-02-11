@@ -1,0 +1,4 @@
+libs6ps.a.xyzzy
+${LIBNSSS}
+-lskarnet
+${MAYBEPTHREAD_LIB}

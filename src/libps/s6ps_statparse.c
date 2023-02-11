@@ -3,10 +3,12 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <errno.h>
+
 #include <skalibs/uint64.h>
 #include <skalibs/types.h>
 #include <skalibs/stralloc.h>
 #include <skalibs/tai.h>
+
 #include "s6-ps.h"
 
 
@@ -17,8 +19,8 @@
 
 #define STATVARS 49
 
-typedef size_t sca$1_func (char const *, void *) ;
-typedef sca$1_func *sca$1_func_ref ;
+typedef size_t pscan_func (char const *, void *) ;
+typedef pscan_func *pscan_func_ref ;
 
 static size_t f64 (char const *s, void *u64)
 {
@@ -48,7 +50,7 @@ DEFUNS(fint, int)
 DEFUNS(fpid, pid_t)
 DEFUNU(fdev, dev_t)
 
-static sca$1_func_ref scanfuncs[STATVARS] =
+static pscan_func_ref scanfuncs[STATVARS] =
 {
   &fpid, /* ppid */
   &fpid, /* pgrp */

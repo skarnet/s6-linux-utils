@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/inotify.h>
+
 #include <skalibs/types.h>
 #include <skalibs/allreadwrite.h>
 #include <skalibs/sgetopt.h>
@@ -20,12 +21,9 @@
 #define USAGE "s6-logwatch [ logdir ]"
 #define dieusage() strerr_dieusage(100, USAGE)
 
-#define B_READING 0
-#define B_BLOCKING 1
-#define B_WAITING 2
-static unsigned int state ;
-static int fd ;
-static int newcurrent = 0 ;
+#define LOGWATCH_READING 0
+#define LOGWATCH_BLOCKING 1
+#define LOGWATCH_WAITING 2
 
 union inotify_event_u
 {
@@ -33,54 +31,54 @@ union inotify_event_u
   char buf[sizeof(struct inotify_event) + NAME_MAX + 1] ;
 } ;
 
-static void goteof (void)
+static inline void logwatch_goteof (int *fd, unsigned int *state, int *newcurrent)
 {
-  if (newcurrent)
+  if (*newcurrent)
   {
-    fd_close(fd) ;
-    fd = open_read("current") ;
-    if (fd < 0) strerr_diefu1sys(111, "current") ;
-    newcurrent = 0 ;
-    state = B_READING ;
+    fd_close(*fd) ;
+    *fd = open_read("current") ;
+    if (*fd < 0) strerr_diefu1sys(111, "current") ;
+    *newcurrent = 0 ;
+    *state = LOGWATCH_READING ;
   }
-  else state = B_BLOCKING ;
+  else *state = LOGWATCH_BLOCKING ;
 }
 
-static int readit (int fd)
+static int logwatch_readit (int *fd, unsigned int *state, int *newcurrent)
 {
   struct iovec v[2] ;
   ssize_t r ;
   buffer_wpeek(buffer_1, v) ;
-  r = fd_readv(fd, v, 2) ;
+  r = fd_readv(*fd, v, 2) ;
   switch (r)
   {
     case -1 : return 0 ;
-    case 0 : goteof() ; break ;
+    case 0 : logwatch_goteof(fd, state, newcurrent) ; break ;
     default : buffer_wseek(buffer_1, r) ;
   }
   return 1 ;
 }
 
-static void maketransition (unsigned int transition)
+static inline void logwatch_maketransition (unsigned int transition, int *fd, unsigned int *state, int *newcurrent)
 {
   static unsigned char const table[3][3] = {
     { 0x10, 0x00, 0x00 },
     { 0x60, 0x22, 0x00 },
     { 0x40, 0x03, 0x02 }
   } ;
-  unsigned char c = table[state][transition] ;
-  state = c & 0x0f ;
-  if (state == 3) strerr_dief1x(101, "current moved twice without being recreated") ;
-  if (c & 0x10) newcurrent = 1 ;
-  if (c & 0x20) { fd_close(fd) ; fd = -1 ; }
+  unsigned char c = table[*state][transition] ;
+  *state = c & 0x0f ;
+  if (*state == 3) strerr_dief1x(101, "current moved twice without being recreated") ;
+  if (c & 0x10) *newcurrent = 1 ;
+  if (c & 0x20) { fd_close(*fd) ; *fd = -1 ; }
   if (c & 0x40)
   {
-    fd = open_read("current") ;
-    if (fd < 0) strerr_diefu1sys(111, "current") ;
+    *fd = open_read("current") ;
+    if (*fd < 0) strerr_diefu1sys(111, "current") ;
   }
 }
 
-static void handle_event (int ifd, int watch)
+static void logwatch_handle_event (int ifd, int watch, int *fd, unsigned int *state, int *newcurrent)
 {
   ssize_t r ;
   size_t offset = 0 ;
@@ -97,7 +95,7 @@ static void handle_event (int ifd, int watch)
       if (event->mask & IN_CREATE) transition = 0 ;
       else if (event->mask & IN_MOVED_FROM) transition = 1 ;
       else if (event->mask & IN_MODIFY) transition = 2 ;
-      if (transition >= 0) maketransition(transition) ;
+      if (transition >= 0) logwatch_maketransition(transition, fd, state, newcurrent) ;
     }
   }
 }
@@ -107,6 +105,9 @@ int main (int argc, char const *const *argv)
   iopause_fd x[2] = { { .events = IOPAUSE_READ }, { .fd = 1 } } ;
   char const *dir = "." ;
   int watch ;
+  int fd ;
+  unsigned int state ;
+  int newcurrent = 0 ;
   unsigned int maxlen = 4096 ;
   PROG = "s6-logwatch" ;
   {
@@ -139,13 +140,13 @@ int main (int argc, char const *const *argv)
   if (fd < 0)
   {
     if (errno != ENOENT) strerr_diefu3sys(111, "open ", dir, "/current") ;
-    state = B_WAITING ;
+    state = LOGWATCH_WAITING ;
   }
-  else state = B_READING ;
+  else state = LOGWATCH_READING ;
   if (!sig_ignore(SIGPIPE)) strerr_diefu1sys(111, "sig_ignore(SIGPIPE)") ;
-  if (state == B_READING)
+  if (state == LOGWATCH_READING)
   {
-    if (!readit(fd)) strerr_diefu3sys(111, "read from ", dir, "/current") ;
+    if (!logwatch_readit(&fd, &state, &newcurrent)) strerr_diefu3sys(111, "read from ", dir, "/current") ;
   }
 
   for (;;)
@@ -162,11 +163,11 @@ int main (int argc, char const *const *argv)
         strerr_diefu1sys(111, "write to stdout") ;
       if (x[1].revents & IOPAUSE_EXCEPT) break ;
     }
-    if (state == B_READING && buffer_available(buffer_1))
+    if (state == LOGWATCH_READING && buffer_available(buffer_1))
     {
-      if (!readit(fd)) strerr_diefu3sys(111, "read from ", dir, "/current") ;
+      if (!logwatch_readit(&fd, &state, &newcurrent)) strerr_diefu3sys(111, "read from ", dir, "/current") ;
     }
-    if (x[0].revents & IOPAUSE_READ) handle_event(x[0].fd, watch) ;
+    if (x[0].revents & IOPAUSE_READ) logwatch_handle_event(x[0].fd, watch, &fd, &state, &newcurrent) ;
   }
   return 0 ;
 }

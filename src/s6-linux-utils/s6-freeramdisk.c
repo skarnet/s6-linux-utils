@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <sys/mount.h>
 #include <sys/ioctl.h>
+
 #include <skalibs/strerr.h>
 
 #define USAGE "s6-freeramdisk ramdisk_device"

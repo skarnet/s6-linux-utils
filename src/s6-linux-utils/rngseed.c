@@ -31,10 +31,9 @@
 #define USAGE "rngseed [ -d seeddir ] [ -v verbosity ] [ -r | -R ] [ -n | -N ] [ -w | -W ]"
 #define dieusage() strerr_dieusage(100, USAGE)
 
-#define HASH_PREFIX "SeedRNG v1 Old+New Prefix"
-#define HASH_FALLBACK "SeedRNG v1 No New Seed Failure"
+#define RNGSEED_HASH_PREFIX "SeedRNG v1 Old+New Prefix"
 
-struct flags_s
+struct rngseed_flags_s
 {
   unsigned int read: 1 ;
   unsigned int rcred: 1 ;
@@ -42,7 +41,7 @@ struct flags_s
   unsigned int write: 1 ;
   unsigned int wcred: 1 ;
 } ;
-#define FLAGS_ZERO { .read = 0, .rcred = 1, .block = 1, .write = 0, .wcred = 1 }
+#define RNGSEED_FLAGS_ZERO { .read = 0, .rcred = 1, .block = 1, .write = 0, .wcred = 1 }
 
 struct randpoolinfo_s
 {
@@ -51,9 +50,7 @@ struct randpoolinfo_s
   char buffer[512]  ;
 } ;
 
-static unsigned int verbosity = 1 ;
-
-static inline void mkdirp (char *s, size_t len)
+static inline void rngseed_mkdirp (char *s, size_t len)
 {
   mode_t m = umask(0) ;
   size_t i = 1 ;
@@ -67,7 +64,7 @@ static inline void mkdirp (char *s, size_t len)
   umask(m) ;
 }
 
-static inline int read_seed_nb (char *s, size_t len)
+static inline int rngseed_read_seed_nb (char *s, size_t len)
 {
   int wcred ;
   size_t w = 0 ;
@@ -102,7 +99,8 @@ int main (int argc, char const *const *argv)
 {
   blake2s_ctx ctx = BLAKE2S_INIT(32) ;
   char const *seeddir = RNGSEED_DIR ;
-  struct flags_s flags = FLAGS_ZERO ;
+  struct rngseed_flags_s flags = RNGSEED_FLAGS_ZERO ;
+  unsigned int verbosity = 1 ;
   PROG = "rngseed" ;
   {
     subgetopt l = SUBGETOPT_ZERO ;
@@ -139,7 +137,7 @@ int main (int argc, char const *const *argv)
       if (dirlen)
       {
         file[dirlen] = 0 ;
-        mkdirp(file, dirlen) ;
+        rngseed_mkdirp(file, dirlen) ;
         if (mkdir(file, 0700) == -1)
         {
           struct stat st ;
@@ -156,7 +154,7 @@ int main (int argc, char const *const *argv)
         }
         file[dirlen] = '/' ;
       }
-      blake2s_update(&ctx, HASH_PREFIX, sizeof(HASH_PREFIX) - 1) ;
+      blake2s_update(&ctx, RNGSEED_HASH_PREFIX, sizeof(RNGSEED_HASH_PREFIX) - 1) ;
       clock_gettime(CLOCK_REALTIME, &ts) ;
       blake2s_update(&ctx, (char *)&ts, sizeof ts) ;
       clock_gettime(CLOCK_BOOTTIME, &ts) ;
@@ -258,7 +256,7 @@ int main (int argc, char const *const *argv)
         strerr_warni3x("reading ", s, " bits of random to make the seed") ;
       }
       if (flags.block) random_buf(seed, len) ;
-      else wcred = read_seed_nb(seed, len) ;
+      else wcred = rngseed_read_seed_nb(seed, len) ;
       if (!wcred && verbosity) strerr_warnwu1x("make the seed creditable") ;
       blake2s_update(&ctx, (char *)&len, sizeof(len)) ;
       blake2s_update(&ctx, seed, len) ;
