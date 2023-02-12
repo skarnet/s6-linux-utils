@@ -1,0 +1,53 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="Content-Language" content="en" />
+    <title>s6-linux-utils: the s6-linux-utils multicall binary</title>
+    <meta name="Description" content="s6-linux-utils: the s6-linux-utils multicall binary" />
+    <meta name="Keywords" content="s6-linux-utils command multicall" />
+    <!-- <link rel="stylesheet" type="text/css" href="//skarnet.org/default.css" /> -->
+  </head>
+<body>
+
+<p>
+<a href="index.html">s6-linux-utils</a><br />
+<a href="//skarnet.org/software/">Software</a><br />
+<a href="//skarnet.org/">skarnet.org</a>
+</p>
+
+<h1> The <tt>s6-linux-utils</tt> multicall binary </h1>
+
+<p>
+The <tt>s6-linux-utils</tt> program is only available when the
+<tt>--enable-multicall</tt> option has been given to the <tt>configure</tt>
+program at build time. In this configuration, <tt>s6-linux-utils</tt> is
+a multicall binary implementing the functionality of <em>all</em>
+the programs in the s6-linux-utils package; and the other programs, instead
+of being executables of their own, are symbolic links to the
+s6-linux-utils binary.
+</p>
+
+<h2> Interface </h2>
+
+<pre>
+     s6-linux-utils <em>subcommand</em> <em>subcommand_arguments...</em>
+</pre>
+
+<p>
+ s6-linux-utils will run the <em>subcommand</em> will its arguments. For
+instance, <tt>s6-linux-utils s6-ps -H</tt> will run the equivalent of the
+<a href="s6-ps.html">s6-ps</a> program, so this command will print a
+tree of the currently running processes.
+</p>
+
+<p>
+ Alternatively, if s6-linux-utils is called with the name of an existing
+command, it will run the equivalent of that command. For instance,
+if the <tt>/usr/bin/s6-ps</tt> file is a (hard or symbolic) link to
+the <tt>s6-linux-utils</tt> binary, <tt>/usr/bin/s6-ps -H</tt> will print
+a tree of the currently running processes.
+</p>
+
+</body>
+</html>

@@ -163,3 +163,26 @@ without relying on a PATH search.
  skarnet.org packages do not support out-of-tree builds. They
 are small, so it does not cost much to duplicate the entire
 source tree if parallel builds are needed.
+
+
+* Multicall binary
+  ----------------
+
+ Starting with version 2.6.1.0, the s6-linux-utils package comes
+with an alternative build in the form of a multicall binary, simply
+called "s6-linux-utils", that includes the functionality of *all*
+the other binaries; it switches functionalities depending on the name
+it is called with, or the subcommand it is given:
+"s6-linux-utils s6-ps -H" will print a tree of the current running
+processes, same as "s6-ps -H" if s6-ps is a link to the
+s6-linux-utils program.
+
+ To use this, use the --enable-multicall option to configure. Only
+the s6-linux-utils binary will be built, and other programs will be
+created as symbolic links to s6-linux-utils at installation time.
+
+ The multicall setup saves a lot of disk space, at the price of
+am unnoticeable amount of CPU usage. RAM usage is about equivalent
+and difficult to assess. The setup is meant for embedded devices
+or small distributions with a focus on saving disk space.
+

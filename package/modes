@@ -9,3 +9,4 @@ s6-ps			0755
 s6-swapoff		0744
 s6-swapon		0744
 s6-umount		0755
+s6-linux-utils		0755

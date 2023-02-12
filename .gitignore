@@ -4,6 +4,8 @@
 /lib*.so.xyzzy
 /config.mak
 /src/include/s6-linux-utils/config.h
+/src/multicall/s6-linux-utils.c
+/s6-linux-utils
 /rngseed
 /s6-chroot
 /s6-freeramdisk
