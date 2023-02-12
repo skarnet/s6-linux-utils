@@ -9,7 +9,7 @@
 #include <skalibs/stralloc.h>
 #include <skalibs/tai.h>
 
-#include "s6-ps.h"
+#include "s6ps.h"
 
 
  /*

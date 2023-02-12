@@ -1,7 +1,7 @@
 *.o
-*.a.xyzzy
+/lib*.a.xyzzy
 *.lo
-*.so.xyzzy
+/lib*.so.xyzzy
 /config.mak
 /src/include/s6-linux-utils/config.h
 /rngseed

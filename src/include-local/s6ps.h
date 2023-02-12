@@ -8,17 +8,10 @@
 
 #include <skalibs/uint64.h>
 #include <skalibs/stralloc.h>
+#include <skalibs/genalloc.h>
 #include <skalibs/tai.h>
+#include <skalibs/avltree.h>
 #include <skalibs/avltreen.h>
-
-
-typedef struct dius_s dius_t, *dius_t_ref ;
-struct dius_s
-{
-  uint32_t left ;
-  size_t right ;
-} ;
-#define DIUS_ZERO { .left = 0, .right = 0 }
 
 typedef enum pfield_e pfield_t, *pfield_t_ref ;
 enum pfield_e
@@ -58,9 +51,6 @@ enum pfield_e
   PFIELD_CPCPU,
   PFIELD_PHAIL
 } ;
-
-extern char const *const *s6ps_opttable ;
-extern char const *const *s6ps_fieldheaders ;
 
 typedef struct pscan_s pscan_t, *pscan_t_ref ;
 struct pscan_s
@@ -131,29 +121,82 @@ struct pscan_s
   .policy = 0 \
 }
 
-extern int s6ps_statparse (pscan_t *) ;
-extern void s6ps_otree (pscan_t *, unsigned int, avltreen *, unsigned int *) ;
+typedef struct s6ps_cache_s s6ps_cache_t, *s6ps_cache_t_ref ;
+struct s6ps_cache_s
+{
+  avltree tree ;
+  genalloc index ;
+} ;
+#define S6PS_CACHE_ZERO { .tree = AVLTREE_ZERO, .index = GENALLOC_ZERO }
 
-extern int s6ps_compute_boottime (pscan_t *, unsigned int) ;
+typedef struct s6ps_wchan_s s6ps_wchan_t, *s6ps_wchan_t_ref ;
+struct s6ps_wchan_s
+{
+  stralloc sysmap ;
+  genalloc ind ;
+} ;
+#define S6PS_WCHAN_ZERO { .sysmap = STRALLOC_ZERO, .ind = GENALLOC_ZERO }
 
-typedef int pfieldfmt_func (pscan_t *, size_t *, size_t *) ;
+typedef struct s6ps_auxinfo_s s6ps_auxinfo_t, *s6ps_auxinfo_t_ref ;
+struct s6ps_auxinfo_s
+{
+  tain boottime ;
+  s6ps_cache_t caches[3] ;
+  s6ps_wchan_t wchan ;
+  unsigned int hz ;
+  unsigned int pgsz ;
+  uint64_t totalmem ;
+} ;
+#define S6PS_AUXINFO_ZERO { .boottime = TAIN_EPOCH, .caches = { S6PS_CACHE_ZERO, S6PS_CACHE_ZERO, S6PS_CACHE_ZERO }, .wchan = S6PS_WCHAN_ZERO, .hz = 0, .pgsz = 0, .totalmem = 0 }
+
+typedef int pfieldfmt_func (s6ps_auxinfo_t *, pscan_t *, size_t *, size_t *) ;
 typedef pfieldfmt_func *pfieldfmt_func_ref ;
 
-extern pfieldfmt_func_ref *s6ps_pfield_fmt ;
 
-extern void *left_dtok (unsigned int, void *) ;
-extern int uint32_cmp (void const *, void const *, void *) ;
-extern int s6ps_pwcache_init (void) ;
-extern void s6ps_pwcache_finish (void) ;
-extern int s6ps_pwcache_lookup (stralloc *, uid_t) ;
-extern int s6ps_grcache_init (void) ;
-extern void s6ps_grcache_finish (void) ;
-extern int s6ps_grcache_lookup (stralloc *, gid_t) ;
-extern int s6ps_ttycache_init (void) ;
-extern void s6ps_ttycache_finish (void) ;
-extern int s6ps_ttycache_lookup (stralloc *, dev_t) ;
-extern int s6ps_wchan_init (char const *) ;
-extern void s6ps_wchan_finish (void) ;
-extern int s6ps_wchan_lookup (stralloc *, uint64_t) ;
+ /* exported by s6ps_pfield.c */
+
+extern char const *const *s6ps_opttable ;
+extern char const *const *s6ps_fieldheaders ;
+extern pfieldfmt_func_ref const *const s6ps_pfield_fmt ;
+extern int s6ps_compute_boottime (s6ps_auxinfo_t *, pscan_t *, unsigned int) ;
+
+
+ /* exported by s6ps_statparse.c */
+
+extern int s6ps_statparse (pscan_t *) ;
+
+
+ /* exported by s6ps_otree.c */
+
+extern void s6ps_otree (pscan_t *, unsigned int, avltreen *, unsigned int *) ;
+
+
+ /* exported by s6ps_cache.c */
+
+extern int s6ps_cache_init (s6ps_cache_t *) ;
+extern void s6ps_cache_finish (s6ps_cache_t *) ;
+extern int s6ps_uint32_cmp (void const *, void const *, void *) ;
+
+
+ /* exported by s6ps_pwcache.c */
+
+extern int s6ps_pwcache_lookup (s6ps_cache_t *, stralloc *, uid_t) ;
+
+
+ /* exported by s6ps_grcache.c */
+
+extern int s6ps_grcache_lookup (s6ps_cache_t *, stralloc *, gid_t) ;
+
+
+ /* exported by s6ps_ttycache.c */
+
+extern int s6ps_ttycache_lookup (s6ps_cache_t *, stralloc *, dev_t) ;
+
+
+ /* exported by s6ps_wchan.c */
+
+extern int s6ps_wchan_init (s6ps_wchan_t *, char const *) ;
+extern void s6ps_wchan_finish (s6ps_wchan_t *) ;
+extern int s6ps_wchan_lookup (s6ps_wchan_t const *, stralloc *, uint64_t) ;
 
 #endif

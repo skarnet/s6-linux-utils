@@ -15,22 +15,8 @@
 #include <skalibs/skamisc.h>
 #include <skalibs/avltree.h>
 
-#include "s6-ps.h"
-
-static avltree ttycache_tree = AVLTREE_ZERO ;
-static genalloc ttycache_index = GENALLOC_ZERO ;
-
-int s6ps_ttycache_init (void)
-{
-  avltree_init(&ttycache_tree, 5, 3, 8, &left_dtok, &uint32_cmp, &ttycache_index) ;
-  return 1 ;
-}
-
-void s6ps_ttycache_finish (void)
-{
-  avltree_free(&ttycache_tree) ;
-  genalloc_free(dius_t, &ttycache_index) ;
-}
+#include "s6ps.h"
+#include "s6ps-internal.h"
 
 static int check (char const *s, dev_t ttynr)
 {
@@ -109,30 +95,24 @@ static int ttyguess (stralloc *sa, dev_t ttynr)
   }
 }
 
-int s6ps_ttycache_lookup (stralloc *sa, dev_t ttynr)
+int s6ps_ttycache_lookup (s6ps_cache_t *cache, stralloc *sa, dev_t ttynr)
 {
-  int wasnull = !satmp.s ;
   dius_t d = { .left = (uint32_t)ttynr, .right = satmp.len } ;
   uint32_t i ;
-  if (!avltree_search(&ttycache_tree, &d.left, &i))
+  if (!avltree_search(&cache->tree, &d.left, &i))
   {
-    unsigned int n = genalloc_len(dius_t, &ttycache_index) ;
+    size_t n = genalloc_len(dius_t, &cache->index) ;
     if (!ttyguess(&satmp, ttynr)) return 0 ;
-    if (!genalloc_append(dius_t, &ttycache_index, &d)) goto err ;
-    if (!avltree_insert(&ttycache_tree, n))
+    if (!genalloc_append(dius_t, &cache->index, &d)) goto err ;
+    if (!avltree_insert(&cache->tree, n))
     {
-      genalloc_setlen(dius_t, &ttycache_index, n) ;
+      genalloc_setlen(dius_t, &cache->index, n) ;
       goto err ;
     }
     i = n ;
   }
-  return stralloc_cats(sa, satmp.s + genalloc_s(dius_t, &ttycache_index)[i].right) ;
+  return stralloc_cats(sa, satmp.s + genalloc_s(dius_t, &cache->index)[i].right) ;
  err:
-  {
-    int e = errno ;
-    if (wasnull) stralloc_free(&satmp) ;
-    else satmp.len = d.right ;
-    errno = e ;
-  }
+  satmp.len = d.right ;
   return 0 ;
 }

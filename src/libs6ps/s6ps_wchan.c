@@ -8,16 +8,13 @@
 #include <skalibs/genalloc.h>
 #include <skalibs/djbunix.h>
 
-#include "s6-ps.h"
+#include "s6ps.h"
 
-static stralloc sysmap = STRALLOC_ZERO ;
-static genalloc ind = GENALLOC_ZERO ;
-
-int s6ps_wchan_init (char const *file)
+int s6ps_wchan_init (s6ps_wchan_t *w, char const *file)
 {
   if (file)
   {
-    if (!openslurpclose(&sysmap, file)) return 0 ;
+    if (!openslurpclose(&w->sysmap, file)) return 0 ;
   }
   else
   {
@@ -34,39 +31,39 @@ int s6ps_wchan_init (char const *file)
       memcpy(buf + 17, uts.release, n + 1) ;
       files[1] = buf ;
       for (; i < 3 ; i++)
-        if (openslurpclose(&sysmap, files[i])) break ;
+        if (openslurpclose(&w->sysmap, files[i])) break ;
       if (i >= 3) return 0 ;
     }
   }
   {
     size_t i = 0 ;
-    if (!genalloc_append(size_t, &ind, &i)) goto err2 ;
-    for (i = 1 ; i <= sysmap.len ; i++)
-      if (sysmap.s[i-1] == '\n')
-        if (!genalloc_append(size_t, &ind, &i)) goto err ;
+    if (!genalloc_append(size_t, &w->ind, &i)) goto err2 ;
+    for (i = 1 ; i <= w->sysmap.len ; i++)
+      if (w->sysmap.s[i-1] == '\n')
+        if (!genalloc_append(size_t, &w->ind, &i)) goto err ;
   }
   return 1 ;
  err:
-  genalloc_free(size_t, &ind) ;
+  genalloc_free(size_t, &w->ind) ;
  err2:
-  stralloc_free(&sysmap) ;
+  stralloc_free(&w->sysmap) ;
   return 0 ;
 }
 
-void s6ps_wchan_finish (void)
+void s6ps_wchan_finish (s6ps_wchan_t *w)
 {
-  genalloc_free(size_t, &ind) ;
-  stralloc_free(&sysmap) ;
+  genalloc_free(size_t, &w->ind) ;
+  stralloc_free(&w->sysmap) ;
 }
 
-static inline size_t lookup (uint64_t addr, size_t *i)
+static inline size_t lookup (s6ps_wchan_t const *w, uint64_t addr, size_t *i)
 {
-  size_t low = 0, mid, high = genalloc_len(size_t, &ind), len ;
+  size_t low = 0, mid, high = genalloc_len(size_t, &w->ind), len ;
   for (;;)
   {
     uint64_t cur ;
     mid = (low + high) >> 1 ;
-    len = uint64_xscan(sysmap.s + genalloc_s(size_t, &ind)[mid], &cur) ;
+    len = uint64_xscan(w->sysmap.s + genalloc_s(size_t, &w->ind)[mid], &cur) ;
     if (!len) return 0 ;
     if (cur == addr) break ;
     if (mid == low) return 0 ;
@@ -76,17 +73,17 @@ static inline size_t lookup (uint64_t addr, size_t *i)
   return len ;
 }
 
-int s6ps_wchan_lookup (stralloc *sa, uint64_t addr)
+int s6ps_wchan_lookup (s6ps_wchan_t const *w, stralloc *sa, uint64_t addr)
 {
   if (addr == (sizeof(void *) == 8 ? 0xffffffffffffffffULL : 0xffffffffUL))
     return stralloc_catb(sa, "*", 1) ;
   if (!addr) return stralloc_catb(sa, "-", 1) ;
-  if (sysmap.len)
+  if (w->sysmap.len)
   {
-    size_t i, pos, len = lookup(addr, &i) ;
+    size_t i, pos, len = lookup(w, addr, &i) ;
     if (!len) return stralloc_catb(sa, "?", 1) ;
-    pos = genalloc_s(size_t, &ind)[i] + len + 3 ;
-    return stralloc_catb(sa, sysmap.s + pos, genalloc_s(size_t, &ind)[i+1] - 1 - pos) ;
+    pos = genalloc_s(size_t, &w->ind)[i] + len + 3 ;
+    return stralloc_catb(sa, w->sysmap.s + pos, genalloc_s(size_t, &w->ind)[i+1] - 1 - pos) ;
   }
   if (!stralloc_readyplus(sa, UINT64_FMT + 3)) return 0 ;
   stralloc_catb(sa, "(0x", 3) ;

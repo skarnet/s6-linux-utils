@@ -27,7 +27,7 @@
 #include <skalibs/unix-transactional.h>
 #include <skalibs/avltreen.h>
 
-#include "s6-ps.h"
+#include "s6ps.h"
 
 #define USAGE "s6-ps [ -H ] [ -w spacing ] [ -W wchanfile ] [ -l | -o field,field... ]"
 
@@ -49,25 +49,12 @@
   (1 << PFIELD_PCPU) | \
   ((uint64_t)1 << PFIELD_CPCPU))
 
-void *left_dtok (unsigned int d, void *x)
-{
-  return (void *)&genalloc_s(dius_t, (genalloc *)x)[d].left ;
-}
-
-int uint32_cmp (void const *a, void const *b, void *x)
-{
-  uint32_t aa = *(uint32_t *)a ;
-  uint32_t bb = *(uint32_t *)b ;
-  (void)x ;
-  return (aa < bb) ? -1 : (aa > bb) ;
-}
-
 static void *pid_dtok (unsigned int d, void *x)
 {
   return &((pscan_t *)x)[d].pid ;
 }
 
-static int fillo_notree (unsigned int i, unsigned int h, void *x)
+static int ps_fillo_notree (unsigned int i, unsigned int h, void *x)
 {
   static unsigned int j = 0 ;
   unsigned int *list = x ;
@@ -76,7 +63,7 @@ static int fillo_notree (unsigned int i, unsigned int h, void *x)
   return 1 ;
 }
 
-static inline unsigned int fieldscan (char const *s, pfield_t *list, uint64_t *fbf)
+static inline unsigned int ps_fieldscan (char const *s, pfield_t *list, uint64_t *fbf)
 {
   uint64_t bits = 0 ;
   unsigned int n = 0 ;
@@ -105,7 +92,7 @@ static inline unsigned int fieldscan (char const *s, pfield_t *list, uint64_t *f
   return n ;
 }
 
-static int slurpit (unsigned int dirfd, stralloc *data, char const *buf, char const *what, size_t *len)
+static int ps_slurpit (unsigned int dirfd, stralloc *data, char const *buf, char const *what, size_t *len)
 {
   size_t start = data->len ;
   int fd = open_readat(dirfd, what) ;
@@ -165,7 +152,7 @@ int main (int argc, char const *const *argv)
         case 'W' : wchanfile = l.arg ; break ;
         case 'o' :
         {
-          nfields = fieldscan(l.arg, fieldlist, &fbf) ;
+          nfields = ps_fieldscan(l.arg, fieldlist, &fbf) ;
           break ;
         }
         default : strerr_dieusage(100, USAGE) ;
@@ -242,22 +229,22 @@ int main (int argc, char const *const *argv)
       }
       if (needstat)
       {
-        if (!slurpit(dirfd, &pscan.data, buf, "stat", &pscan.statlen))
+        if (!ps_slurpit(dirfd, &pscan.data, buf, "stat", &pscan.statlen))
           goto errindir ;
-        if (!slurpit(dirfd, &pscan.data, buf, "comm", &pscan.commlen))
+        if (!ps_slurpit(dirfd, &pscan.data, buf, "comm", &pscan.commlen))
           goto errindir ;
         if (pscan.commlen) { pscan.commlen-- ; pscan.data.len-- ; }
       }
       if (fbf & (1 << PFIELD_ARGS))
       {
-        if (!slurpit(dirfd, &pscan.data, buf, "cmdline", &pscan.cmdlen)) goto errindir ;
+        if (!ps_slurpit(dirfd, &pscan.data, buf, "cmdline", &pscan.cmdlen)) goto errindir ;
         while (!pscan.data.s[pscan.data.len-1])
         {
           pscan.cmdlen-- ;
           pscan.data.len-- ;
         }
       }
-      if (fbf & (1 << PFIELD_ENV)) slurpit(dirfd, &pscan.data, buf, "environ", &pscan.envlen) ;
+      if (fbf & (1 << PFIELD_ENV)) ps_slurpit(dirfd, &pscan.data, buf, "environ", &pscan.envlen) ;
       fd_close(dirfd) ;
       if (!genalloc_append(pscan_t, &pscans, &pscan))
         strerr_diefu1sys(111, "genalloc_append") ;
@@ -281,13 +268,14 @@ int main (int argc, char const *const *argv)
   n = genalloc_len(pscan_t, &pscans) - 1 ;
 
   {
-    unsigned int orderedlist[n+1] ; /* 1st element will be 0, ignored */
+    s6ps_auxinfo_t aux = S6PS_AUXINFO_ZERO ;
     unsigned int i = 0 ;
+    unsigned int orderedlist[n+1] ; /* 1st element will be 0, ignored */
 
     /* Order the processes for display */
 
     {
-      AVLTREEN_DECLARE_AND_INIT(pidtree, n+1, &pid_dtok, &uint32_cmp, p) ;
+      AVLTREEN_DECLARE_AND_INIT(pidtree, n+1, &pid_dtok, &s6ps_uint32_cmp, p) ;
       for (i = 0 ; i < n ; i++)
       {
         if (needstat && !s6ps_statparse(p+i))
@@ -299,7 +287,7 @@ int main (int argc, char const *const *argv)
         strerr_diefu1sys(111, "avltreen_insert") ;
 
       if (flagtree) s6ps_otree(p, n+1, &pidtree, orderedlist) ;
-      else avltreen_iter_nocancel(&pidtree, avltreen_totalsize(&pidtree), &fillo_notree, orderedlist) ;
+      else avltreen_iter_nocancel(&pidtree, avltreen_totalsize(&pidtree), &ps_fillo_notree, orderedlist) ;
     }
 
 
@@ -308,15 +296,15 @@ int main (int argc, char const *const *argv)
     if (fbf & ((1 << PFIELD_START) | ((uint64_t)1 << PFIELD_TSTART) | (1 << PFIELD_PCPU) | ((uint64_t)1 << PFIELD_CPCPU)))
     {
       tain_wallclock_read_g() ;
-      s6ps_compute_boottime(p, mypos) ;
+      s6ps_compute_boottime(&aux, p, mypos) ;
     }
-    if (fbf & (1 << PFIELD_USER) && !s6ps_pwcache_init())
+    if (fbf & (1 << PFIELD_USER) && !s6ps_cache_init(&aux.caches[0]))
       strerr_diefu1sys(111, "init user name cache") ;
-    if (fbf & (1 << PFIELD_GROUP) && !s6ps_grcache_init())
+    if (fbf & (1 << PFIELD_GROUP) && !s6ps_cache_init(&aux.caches[1]))
       strerr_diefu1sys(111, "init group name cache") ;
-    if (fbf & (1 << PFIELD_TTY) && !s6ps_ttycache_init())
+    if (fbf & (1 << PFIELD_TTY) && !s6ps_cache_init(&aux.caches[2]))
       strerr_diefu1sys(111, "init tty name cache") ;
-    if (fbf & (1 << PFIELD_WCHAN) && !s6ps_wchan_init(wchanfile))
+    if (fbf & (1 << PFIELD_WCHAN) && !s6ps_wchan_init(&aux.wchan, wchanfile))
     {
       if (wchanfile) strerr_warnwu2sys("init wchan file ", wchanfile) ;
       else strerr_warnwu1sys("init wchan") ;
@@ -333,7 +321,7 @@ int main (int argc, char const *const *argv)
         unsigned int j = 0 ;
         for (; j < nfields ; j++)
         {
-          if (!(*s6ps_pfield_fmt[fieldlist[j]])(p+i, &fmtpos[i][j], &fmtlen[i][j]))
+          if (!(*s6ps_pfield_fmt[fieldlist[j]])(&aux, p+i, &fmtpos[i][j], &fmtlen[i][j]))
             strerr_diefu1sys(111, "format fields") ;
           if (fmtlen[i][j] > maxlen[j]) maxlen[j] = fmtlen[i][j] ;
         }
@@ -341,10 +329,10 @@ int main (int argc, char const *const *argv)
       for (i = 0 ; i < nfields ; i++)
         if (maxlen[i] > maxspaces) maxspaces = maxlen[i] ;
       maxspaces += spacing ;
-      if (fbf & (1 << PFIELD_USER)) s6ps_pwcache_finish() ;
-      if (fbf & (1 << PFIELD_GROUP)) s6ps_grcache_finish() ;
-      if (fbf & (1 << PFIELD_TTY)) s6ps_ttycache_finish() ;
-      if (fbf & (1 << PFIELD_WCHAN)) s6ps_wchan_finish() ;
+      if (fbf & (1 << PFIELD_USER)) s6ps_cache_finish(&aux.caches[0]) ;
+      if (fbf & (1 << PFIELD_GROUP)) s6ps_cache_finish(&aux.caches[1]) ;
+      if (fbf & (1 << PFIELD_TTY)) s6ps_cache_finish(&aux.caches[2]) ;
+      if (fbf & (1 << PFIELD_WCHAN)) s6ps_wchan_finish(&aux.wchan) ;
       stralloc_free(&satmp) ;
       {
         char spaces[maxspaces] ;
