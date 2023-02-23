@@ -12,7 +12,9 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#ifdef SKALIBS_HASGETRANDOM
 #include <sys/random.h>
+#endif
 #include <linux/random.h>
 
 #include <skalibs/types.h>
