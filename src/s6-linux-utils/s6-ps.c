@@ -32,22 +32,26 @@
 #define USAGE "s6-ps [ -H ] [ -w spacing ] [ -W wchanfile ] [ -l | -o field,field... ]"
 
 #define RIGHTFORMATTED ( \
-  (1 << PFIELD_PID) | \
-  (1 << PFIELD_PPID) | \
-  (1 << PFIELD_PGRP) | \
-  (1 << PFIELD_SESSION) | \
-  (1 << PFIELD_TPGID) | \
-  (1 << PFIELD_PRIO) | \
-  (1 << PFIELD_NICE) | \
-  (1 << PFIELD_THREADS) | \
-  (1 << PFIELD_VSIZE) | \
-  (1 << PFIELD_RSS) | \
-  (1 << PFIELD_RSSLIM) | \
-  (1 << PFIELD_CPUNO) | \
-  (1 << PFIELD_RTPRIO) | \
-  (1 << PFIELD_PMEM) | \
-  (1 << PFIELD_PCPU) | \
-  ((uint64_t)1 << PFIELD_CPCPU))
+  (1ULL << PFIELD_PID) | \
+  (1ULL << PFIELD_PPID) | \
+  (1ULL << PFIELD_PGRP) | \
+  (1ULL << PFIELD_SESSION) | \
+  (1ULL << PFIELD_TPGID) | \
+  (1ULL << PFIELD_MINFLT) | \
+  (1ULL << PFIELD_CMINFLT) | \
+  (1ULL << PFIELD_MAJFLT) | \
+  (1ULL << PFIELD_CMAJFLT) | \
+  (1ULL << PFIELD_PRIO) | \
+  (1ULL << PFIELD_NICE) | \
+  (1ULL << PFIELD_THREADS) | \
+  (1ULL << PFIELD_VSIZE) | \
+  (1ULL << PFIELD_RSS) | \
+  (1ULL << PFIELD_RSSLIM) | \
+  (1ULL << PFIELD_CPUNO) | \
+  (1ULL << PFIELD_RTPRIO) | \
+  (1ULL << PFIELD_PMEM) | \
+  (1ULL << PFIELD_PCPU) | \
+  (1ULL << PFIELD_CPCPU))
 
 static void *pid_dtok (unsigned int d, void *x)
 {
@@ -81,7 +85,7 @@ static inline unsigned int ps_fieldscan (char const *s, pfield_t *list, uint64_t
       for (; i < PFIELD_PHAIL ; i++) if (!strcmp(tmp, s6ps_opttable[i])) break ;
       if (i >= PFIELD_PHAIL)
         strerr_dief4x(100, "invalid", " field for -o option", ": ", tmp) ;
-      if (bits & ((uint64_t)1 << i))
+      if (bits & (1ULL << i))
         strerr_dief4x(100, "duplicate", " field for -o option", ": ", tmp) ;
     }
     s += len + 1 ;
@@ -130,7 +134,7 @@ int main (int argc, char const *const *argv)
         case 'l' :
         {
           nfields = 11 ;
-          fbf = (1 << PFIELD_USER) | (1 << PFIELD_PID) | ((uint64_t)1 << PFIELD_CPCPU) | (1 << PFIELD_PMEM) | (1 << PFIELD_VSIZE) | (1 << PFIELD_RSS) | (1 << PFIELD_TTY) | (1 << PFIELD_STATE) | (1 << PFIELD_START) | (1 << PFIELD_CTTIME) | (1 << PFIELD_ARGS) ;
+          fbf = (1ULL << PFIELD_USER) | (1ULL << PFIELD_PID) | (1ULL << PFIELD_CPCPU) | (1ULL << PFIELD_PMEM) | (1ULL << PFIELD_VSIZE) | (1ULL << PFIELD_RSS) | (1ULL << PFIELD_TTY) | (1ULL << PFIELD_STATE) | (1ULL << PFIELD_START) | (1ULL << PFIELD_CTTIME) | (1ULL << PFIELD_ARGS) ;
           fieldlist[0] = PFIELD_USER ;
           fieldlist[1] = PFIELD_PID ;
           fieldlist[2] = PFIELD_CPCPU ;
@@ -165,35 +169,39 @@ int main (int argc, char const *const *argv)
   if (spacing > 256) spacing = 256 ;
 
   needstat = flagtree || !!(fbf & (
-   (1 << PFIELD_PID) |
-   (1 << PFIELD_COMM) |
-   (1 << PFIELD_STATE) |
-   (1 << PFIELD_PPID) |
-   (1 << PFIELD_PGRP) |
-   (1 << PFIELD_SESSION) |
-   (1 << PFIELD_TTY) |
-   (1 << PFIELD_TPGID) |
-   (1 << PFIELD_UTIME) |
-   (1 << PFIELD_STIME) |
-   (1 << PFIELD_CUTIME) |
-   (1 << PFIELD_CSTIME) |
-   (1 << PFIELD_PRIO) |
-   (1 << PFIELD_NICE) |
-   (1 << PFIELD_THREADS) |
-   (1 << PFIELD_START) |
-   (1 << PFIELD_VSIZE) |
-   (1 << PFIELD_RSS) |
-   (1 << PFIELD_RSSLIM) |
-   (1 << PFIELD_CPUNO) |
-   (1 << PFIELD_RTPRIO) |
-   (1 << PFIELD_RTPOLICY) |
-   (1 << PFIELD_PMEM) |
-   (1 << PFIELD_WCHAN) |
-   (1 << PFIELD_PCPU) |
-   (1 << PFIELD_TTIME) |
-   (1 << PFIELD_CTTIME) |
-   ((uint64_t)1 << PFIELD_TSTART) |
-   ((uint64_t)1 << PFIELD_CPCPU))) ;
+   (1ULL << PFIELD_PID) |
+   (1ULL << PFIELD_COMM) |
+   (1ULL << PFIELD_STATE) |
+   (1ULL << PFIELD_PPID) |
+   (1ULL << PFIELD_PGRP) |
+   (1ULL << PFIELD_SESSION) |
+   (1ULL << PFIELD_TTY) |
+   (1ULL << PFIELD_TPGID) |
+   (1ULL << PFIELD_MINFLT) |
+   (1ULL << PFIELD_CMINFLT) |
+   (1ULL << PFIELD_MAJFLT) |
+   (1ULL << PFIELD_CMAJFLT) |
+   (1ULL << PFIELD_UTIME) |
+   (1ULL << PFIELD_STIME) |
+   (1ULL << PFIELD_CUTIME) |
+   (1ULL << PFIELD_CSTIME) |
+   (1ULL << PFIELD_PRIO) |
+   (1ULL << PFIELD_NICE) |
+   (1ULL << PFIELD_THREADS) |
+   (1ULL << PFIELD_START) |
+   (1ULL << PFIELD_VSIZE) |
+   (1ULL << PFIELD_RSS) |
+   (1ULL << PFIELD_RSSLIM) |
+   (1ULL << PFIELD_CPUNO) |
+   (1ULL << PFIELD_RTPRIO) |
+   (1ULL << PFIELD_RTPOLICY) |
+   (1ULL << PFIELD_PMEM) |
+   (1ULL << PFIELD_WCHAN) |
+   (1ULL << PFIELD_PCPU) |
+   (1ULL << PFIELD_TTIME) |
+   (1ULL << PFIELD_CTTIME) |
+   (1ULL << PFIELD_TSTART) |
+   (1ULL << PFIELD_CPCPU))) ;
 
 
  /* Scan /proc */
@@ -293,18 +301,18 @@ int main (int argc, char const *const *argv)
 
    /* Format, compute length, output */
 
-    if (fbf & ((1 << PFIELD_START) | ((uint64_t)1 << PFIELD_TSTART) | (1 << PFIELD_PCPU) | ((uint64_t)1 << PFIELD_CPCPU)))
+    if (fbf & ((1ULL << PFIELD_START) | (1ULL << PFIELD_TSTART) | (1ULL << PFIELD_PCPU) | (1ULL << PFIELD_CPCPU)))
     {
       tain_wallclock_read_g() ;
       s6ps_compute_boottime(&aux, p, mypos) ;
     }
-    if (fbf & (1 << PFIELD_USER) && !s6ps_cache_init(&aux.caches[0]))
+    if (fbf & (1ULL << PFIELD_USER) && !s6ps_cache_init(&aux.caches[0]))
       strerr_diefu1sys(111, "init user name cache") ;
-    if (fbf & (1 << PFIELD_GROUP) && !s6ps_cache_init(&aux.caches[1]))
+    if (fbf & (1ULL << PFIELD_GROUP) && !s6ps_cache_init(&aux.caches[1]))
       strerr_diefu1sys(111, "init group name cache") ;
-    if (fbf & (1 << PFIELD_TTY) && !s6ps_cache_init(&aux.caches[2]))
+    if (fbf & (1ULL << PFIELD_TTY) && !s6ps_cache_init(&aux.caches[2]))
       strerr_diefu1sys(111, "init tty name cache") ;
-    if (fbf & (1 << PFIELD_WCHAN) && !s6ps_wchan_init(&aux.wchan, wchanfile))
+    if (fbf & (1ULL << PFIELD_WCHAN) && !s6ps_wchan_init(&aux.wchan, wchanfile))
     {
       if (wchanfile) strerr_warnwu2sys("init wchan file ", wchanfile) ;
       else strerr_warnwu1sys("init wchan") ;
@@ -329,10 +337,10 @@ int main (int argc, char const *const *argv)
       for (i = 0 ; i < nfields ; i++)
         if (maxlen[i] > maxspaces) maxspaces = maxlen[i] ;
       maxspaces += spacing ;
-      if (fbf & (1 << PFIELD_USER)) s6ps_cache_finish(&aux.caches[0]) ;
-      if (fbf & (1 << PFIELD_GROUP)) s6ps_cache_finish(&aux.caches[1]) ;
-      if (fbf & (1 << PFIELD_TTY)) s6ps_cache_finish(&aux.caches[2]) ;
-      if (fbf & (1 << PFIELD_WCHAN)) s6ps_wchan_finish(&aux.wchan) ;
+      if (fbf & (1ULL << PFIELD_USER)) s6ps_cache_finish(&aux.caches[0]) ;
+      if (fbf & (1ULL << PFIELD_GROUP)) s6ps_cache_finish(&aux.caches[1]) ;
+      if (fbf & (1ULL << PFIELD_TTY)) s6ps_cache_finish(&aux.caches[2]) ;
+      if (fbf & (1ULL << PFIELD_WCHAN)) s6ps_wchan_finish(&aux.wchan) ;
       stralloc_free(&satmp) ;
       {
         char spaces[maxspaces] ;

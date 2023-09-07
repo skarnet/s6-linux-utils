@@ -1,9 +1,10 @@
 Changelog for s6-linux-utils.
 
-In 2.6.1.3
+In 2.6.2.0
 ----------
 
  - Bugfixes.
+ - s6-ps now supports minflt, cminflt, majflt, cmajflt.
 
 
 In 2.6.1.2

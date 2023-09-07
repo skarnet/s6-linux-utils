@@ -81,6 +81,10 @@ cannot tell whether a process has locked memory pages or not. </li>
  <li> <tt>sess</tt>&nbsp;: the session leader's pid. </li>
  <li> <tt>tty</tt>&nbsp;: the name of the process's controlling terminal.</li>
  <li> <tt>tpgid</tt>&nbsp;: the pid of the foreground process group. </li>
+ <li> <tt>minflt</tt>&nbsp;: the number of minor page fault the process has encountered. </li>
+ <li> <tt>cminflt</tt>&nbsp;: the cumulative number of minor page fault the process and its dead children have encountered. </li>
+ <li> <tt>majflt</tt>&nbsp;: the number of major page fault the process has encountered. </li>
+ <li> <tt>cmajflt</tt>&nbsp;: the cumulative number of major page fault the process and its dead children have encountered. </li>
  <li> <tt>utime</tt>&nbsp;: the time the process spent in user mode. </li>
  <li> <tt>stime</tt>&nbsp;: the time the process spent in kernel mode. </li>
  <li> <tt>cutime</tt>&nbsp;: the time spent in user mode by the process <em>and</em>

@@ -25,6 +25,10 @@ static char const *const fieldheaders[PFIELD_PHAIL] =
   "SESSION",
   "TTY",
   "TPGID",
+  "MINFLT",
+  "CMINFLT",
+  "MAJFLT",
+  "CMAJFLT",
   "UTIME",
   "STIME",
   "CUTIME",
@@ -64,6 +68,10 @@ static char const *const opttable[PFIELD_PHAIL] =
   "sess",
   "tty",
   "tpgid",
+  "minflt",
+  "cminflt",
+  "majflt",
+  "cmajflt",
   "utime",
   "stime",
   "cutime",
@@ -255,6 +263,30 @@ static int fmt_jiffies (s6ps_auxinfo_t *aux, pscan_t *p, size_t *pos, size_t *le
   p->data.s[p->data.len++] = 's' ;
   *len = p->data.len - *pos ;
   return 1 ;
+}
+
+static int fmt_minflt (s6ps_auxinfo_t *aux, pscan_t *p, size_t *pos, size_t *len)
+{
+  (void)aux ;
+  return fmt_64(p, pos, len, p->minflt) ;
+}
+
+static int fmt_cminflt (s6ps_auxinfo_t *aux, pscan_t *p, size_t *pos, size_t *len)
+{
+  (void)aux ;
+  return fmt_64(p, pos, len, p->cminflt) ;
+}
+
+static int fmt_majflt (s6ps_auxinfo_t *aux, pscan_t *p, size_t *pos, size_t *len)
+{
+  (void)aux ;
+  return fmt_64(p, pos, len, p->majflt) ;
+}
+
+static int fmt_cmajflt (s6ps_auxinfo_t *aux, pscan_t *p, size_t *pos, size_t *len)
+{
+  (void)aux ;
+  return fmt_64(p, pos, len, p->cmajflt) ;
 }
 
 static int fmt_utime (s6ps_auxinfo_t *aux, pscan_t *p, size_t *pos, size_t *len)
@@ -545,6 +577,10 @@ static pfieldfmt_func_ref const pfieldfmt_table[PFIELD_PHAIL] =
   &fmt_session,
   &fmt_ttynr,
   &fmt_tpgid,
+  &fmt_minflt,
+  &fmt_cminflt,
+  &fmt_majflt,
+  &fmt_cmajflt,
   &fmt_utime,
   &fmt_stime,
   &fmt_cutime,

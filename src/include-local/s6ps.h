@@ -23,7 +23,11 @@ enum pfield_e
   PFIELD_PGRP,
   PFIELD_SESSION,
   PFIELD_TTY,
-  PFIELD_TPGID, 
+  PFIELD_TPGID,
+  PFIELD_MINFLT,
+  PFIELD_CMINFLT,
+  PFIELD_MAJFLT,
+  PFIELD_CMAJFLT, 
   PFIELD_UTIME,
   PFIELD_STIME,
   PFIELD_CUTIME,
@@ -70,6 +74,10 @@ struct pscan_s
   pid_t session ;
   dev_t ttynr ;
   pid_t tpgid ;
+  uint64_t minflt ;
+  uint64_t cminflt ;
+  uint64_t majflt ;
+  uint64_t cmajflt ;
   uint64_t utime ;
   uint64_t stime ;
   uint64_t cutime ;
@@ -104,6 +112,10 @@ struct pscan_s
   .session = 0, \
   .ttynr = 0, \
   .tpgid = -1, \
+  .minflt = 0, \
+  .cminflt = 0, \
+  .majflt = 0, \
+  .cmajflt = 0, \
   .utime = 0, \
   .stime = 0, \
   .cutime = 0, \
