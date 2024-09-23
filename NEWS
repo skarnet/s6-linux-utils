@@ -1,5 +1,11 @@
 Changelog for s6-linux-utils.
 
+In 2.6.2.1
+----------
+
+ - Align configure script to the rest of skaware.
+
+
 In 2.6.2.0
 ----------
 
