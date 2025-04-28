@@ -1,0 +1,1 @@
+echo "#define RNGSEED_DIR \"$seeddir\""

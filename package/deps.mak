@@ -25,30 +25,30 @@ src/s6-linux-utils/s6-umount.o src/s6-linux-utils/s6-umount.lo: src/s6-linux-uti
 ifeq ($(strip $(STATIC_LIBS_ARE_PIC)),)
 libs6ps.a.xyzzy: src/libs6ps/s6ps_cache.o src/libs6ps/s6ps_grcache.o src/libs6ps/s6ps_otree.o src/libs6ps/s6ps_pfield.o src/libs6ps/s6ps_pwcache.o src/libs6ps/s6ps_statparse.o src/libs6ps/s6ps_ttycache.o src/libs6ps/s6ps_wchan.o
 else
-libs6ps.a.xyzzy: src/libs6ps/s6ps_cache.lo src/libs6ps/s6ps_grcache.lo src/libs6ps/s6ps_otree.lo src/libs6ps/s6ps_pfield.lo src/libs6ps/s6ps_pwcache.lo src/libs6ps/s6ps_statparse.lo src/libs6ps/s6ps_ttycache.lo src/libs6ps/s6ps_wchan.lo
+libs6ps.a.xyzzy:src/libs6ps/s6ps_cache.lo src/libs6ps/s6ps_grcache.lo src/libs6ps/s6ps_otree.lo src/libs6ps/s6ps_pfield.lo src/libs6ps/s6ps_pwcache.lo src/libs6ps/s6ps_statparse.lo src/libs6ps/s6ps_ttycache.lo src/libs6ps/s6ps_wchan.lo
 endif
-s6-linux-utils: EXTRA_LIBS := -lskarnet ${SYSCLOCK_LIB} ${MAYBEPTHREAD_LIB}
-s6-linux-utils: src/multicall/s6-linux-utils.o libs6ps.a.xyzzy ${LIBNSSS}
-rngseed: EXTRA_LIBS := -lskarnet ${SYSCLOCK_LIB}
-rngseed: src/s6-linux-utils/rngseed.o
-s6-chroot: EXTRA_LIBS := -lskarnet
-s6-chroot: src/s6-linux-utils/s6-chroot.o
-s6-freeramdisk: EXTRA_LIBS := -lskarnet
-s6-freeramdisk: src/s6-linux-utils/s6-freeramdisk.o
-s6-hostname: EXTRA_LIBS := -lskarnet
-s6-hostname: src/s6-linux-utils/s6-hostname.o
-s6-logwatch: EXTRA_LIBS := -lskarnet
-s6-logwatch: src/s6-linux-utils/s6-logwatch.o
-s6-mount: EXTRA_LIBS := -lskarnet
-s6-mount: src/s6-linux-utils/s6-mount.o
-s6-pivotchroot: EXTRA_LIBS := -lskarnet
-s6-pivotchroot: src/s6-linux-utils/s6-pivotchroot.o
-s6-ps: EXTRA_LIBS := -lskarnet ${MAYBEPTHREAD_LIB}
-s6-ps: src/s6-linux-utils/s6-ps.o libs6ps.a.xyzzy ${LIBNSSS}
-s6-swapoff: EXTRA_LIBS := -lskarnet
-s6-swapoff: src/s6-linux-utils/s6-swapoff.o
-s6-swapon: EXTRA_LIBS := -lskarnet
-s6-swapon: src/s6-linux-utils/s6-swapon.o
-s6-umount: EXTRA_LIBS := -lskarnet
-s6-umount: src/s6-linux-utils/s6-umount.o
+s6-linux-utils: EXTRA_LIBS := ${SYSCLOCK_LIB} ${MAYBEPTHREAD_LIB}
+s6-linux-utils: src/multicall/s6-linux-utils.o libs6ps.a.xyzzy ${LIBNSSS} -lskarnet
+rngseed: EXTRA_LIBS := ${SYSCLOCK_LIB}
+rngseed: src/s6-linux-utils/rngseed.o -lskarnet
+s6-chroot: EXTRA_LIBS :=
+s6-chroot: src/s6-linux-utils/s6-chroot.o -lskarnet
+s6-freeramdisk: EXTRA_LIBS :=
+s6-freeramdisk: src/s6-linux-utils/s6-freeramdisk.o -lskarnet
+s6-hostname: EXTRA_LIBS :=
+s6-hostname: src/s6-linux-utils/s6-hostname.o -lskarnet
+s6-logwatch: EXTRA_LIBS :=
+s6-logwatch: src/s6-linux-utils/s6-logwatch.o -lskarnet
+s6-mount: EXTRA_LIBS :=
+s6-mount: src/s6-linux-utils/s6-mount.o -lskarnet
+s6-pivotchroot: EXTRA_LIBS :=
+s6-pivotchroot: src/s6-linux-utils/s6-pivotchroot.o -lskarnet
+s6-ps: EXTRA_LIBS := ${MAYBEPTHREAD_LIB}
+s6-ps: src/s6-linux-utils/s6-ps.o libs6ps.a.xyzzy ${LIBNSSS} -lskarnet
+s6-swapoff: EXTRA_LIBS :=
+s6-swapoff: src/s6-linux-utils/s6-swapoff.o -lskarnet
+s6-swapon: EXTRA_LIBS :=
+s6-swapon: src/s6-linux-utils/s6-swapon.o -lskarnet
+s6-umount: EXTRA_LIBS :=
+s6-umount: src/s6-linux-utils/s6-umount.o -lskarnet
 INTERNAL_LIBS := libs6ps.a.xyzzy

@@ -1,9 +1,10 @@
 Changelog for s6-linux-utils.
 
-In 2.6.2.2
+In 2.6.3.0
 ----------
 
  - Bugfixes.
+ - pkg-config support.
 
 
 In 2.6.2.1

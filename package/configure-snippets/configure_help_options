@@ -1,0 +1,4 @@
+  --enable-nsss                 use the nsss library for user information [disabled]
+  --with-seed-dir=DIR           make DIR the default rngseed directory [/var/lib/rngseed]
+  --enable-multicall            build a multicall binary [disabled]
+
