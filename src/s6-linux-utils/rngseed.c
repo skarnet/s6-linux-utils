@@ -17,6 +17,7 @@
 #endif
 #include <linux/random.h>
 
+#include <skalibs/posixplz.h>
 #include <skalibs/types.h>
 #include <skalibs/sgetopt.h>
 #include <skalibs/error.h>
@@ -51,20 +52,6 @@ struct randpoolinfo_s
   int buf_size ;
   char buffer[512]  ;
 } ;
-
-static inline void rngseed_mkdirp (char *s, size_t len)
-{
-  mode_t m = umask(0) ;
-  size_t i = 1 ;
-  for (; i < len ; i++) if (s[i] == '/')
-  {
-    s[i] = 0 ;
-    if (mkdir(s, 02755) < 0 && errno != EEXIST)
-      strerr_diefu2sys(111, "mkdir ", s) ;
-    s[i] = '/' ;
-  }
-  umask(m) ;
-}
 
 static inline int rngseed_read_seed_nb (char *s, size_t len)
 {
@@ -139,8 +126,7 @@ int main (int argc, char const *const *argv)
       if (dirlen)
       {
         file[dirlen] = 0 ;
-        rngseed_mkdirp(file, dirlen) ;
-        if (mkdir(file, 0700) == -1)
+        if (mkdirp2(file, 0700) == -1)
         {
           struct stat st ;
           if (errno != EEXIST) strerr_diefu2sys(111, "mkdir ", file) ;
