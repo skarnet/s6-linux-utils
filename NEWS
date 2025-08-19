@@ -1,5 +1,12 @@
 Changelog for s6-linux-utils.
 
+In 2.6.3.1
+----------
+
+ - Bugfixes.
+ - Support of shared libraries on MacOS.
+
+
 In 2.6.3.0
 ----------
 
