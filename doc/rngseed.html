@@ -125,6 +125,11 @@ seed file management. </li>
 point of view.
 <tt>rngseed -r</tt> reads from the file (and unlinks it) and writes to the kernel
 RNG. <tt>rngseed -w</tt> reads from the kernel RNG and writes to the file. </li>
+ <li> It is a good idea to use <tt>rngseed -rw</tt> at boot time, rather than
+<tt>rngseed -r</tt>. This ensures that a seed file will be present on next boot
+even if the system doesn't undergo a clean shutdown (e.g. the power fails).
+Of course, this does not preclude running <tt>rngseed -w</tt> in the shutdown
+sequence, so the next boot runs with the freshest possible seed. </li>
  <li> <tt>rngseed</tt> is inspired by Jason Donenfeld's
 <a href="https://git.zx2c4.com/seedrng/about/">seedrng</a> program. It is,
 however, an independent implementation of the same concept. </li>
