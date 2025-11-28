@@ -15,7 +15,7 @@
 
 #include "mount-constants.h"
 
-#define USAGE "s6-mount -a [ -z fstab ] | s6-mount [ -n ] [ -t type ] [ -o option[,option...] ]... device mountpoint"
+#define USAGE "s6-mount [ -a ] [ -z fstab ] | s6-mount [ -n ] [ -t type ] [ -o option[,option...] ]... device mountpoint"
 #define dienomem() strerr_diefu1sys(111, "stralloc_catb")
 
 struct mount_flag_modif_s
@@ -100,25 +100,29 @@ static void mount_scanopt (stralloc *data, unsigned long *flags, char const *s)
 
 static int mountall (char const *fstab)
 {
-  struct mntent *d ;
   int e = 0 ;
+  stralloc data = STRALLOC_ZERO ;
   FILE *yuck = setmntent(fstab, "r") ;
   if (!yuck) strerr_diefu2sys(111, "open ", fstab) ;
-  while ((d = getmntent(yuck)))
+  for (;;)
   {
     unsigned long flags = 0 ;
-    stralloc data = STRALLOC_ZERO ;
+    struct mntent *d ;
+    errno = 0 ;
+    d = getmntent(yuck) ;
+    if (!d) break ;
     mount_scanopt(&data, &flags, d->mnt_opts) ;
-    if (!stralloc_0(&data))
-      strerr_diefu1sys(111, "build data string") ;
+    if (!stralloc_0(&data)) strerr_diefu1sys(111, "build data string") ;
     if (mount(d->mnt_fsname, d->mnt_dir, d->mnt_type, flags, data.s) == -1)
     {
       e++ ;
       strerr_warnwu4sys("mount ", d->mnt_fsname, " on ", d->mnt_dir) ;
     }
-    stralloc_free(&data) ;
+    data.len = 0 ;
   }
+  if (errno) strerr_diefu2sys(111, "getmntent on ", fstab) ;
   endmntent(yuck) ;
+  // stralloc_free(&data) ;
   return e ;
 }
 

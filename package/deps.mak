@@ -10,6 +10,8 @@ src/libs6ps/s6ps_pwcache.o src/libs6ps/s6ps_pwcache.lo: src/libs6ps/s6ps_pwcache
 src/libs6ps/s6ps_statparse.o src/libs6ps/s6ps_statparse.lo: src/libs6ps/s6ps_statparse.c src/include-local/s6ps.h
 src/libs6ps/s6ps_ttycache.o src/libs6ps/s6ps_ttycache.lo: src/libs6ps/s6ps_ttycache.c src/libs6ps/s6ps-internal.h src/include-local/s6ps.h
 src/libs6ps/s6ps_wchan.o src/libs6ps/s6ps_wchan.lo: src/libs6ps/s6ps_wchan.c src/include-local/s6ps.h
+src/multicall/s6-linux-utils.o src/multicall/s6-linux-utils.lo: src/multicall/s6-linux-utils.c src/include/s6-linux-utils/config.h src/include-local/s6ps.h
+src/s6-linux-utils/fstab2s6rc.o src/s6-linux-utils/fstab2s6rc.lo: src/s6-linux-utils/fstab2s6rc.c src/include/s6-linux-utils/config.h
 src/s6-linux-utils/rngseed.o src/s6-linux-utils/rngseed.lo: src/s6-linux-utils/rngseed.c src/include/s6-linux-utils/config.h
 src/s6-linux-utils/s6-chroot.o src/s6-linux-utils/s6-chroot.lo: src/s6-linux-utils/s6-chroot.c
 src/s6-linux-utils/s6-freeramdisk.o src/s6-linux-utils/s6-freeramdisk.lo: src/s6-linux-utils/s6-freeramdisk.c
@@ -29,6 +31,8 @@ libs6ps.a.xyzzy:src/libs6ps/s6ps_cache.lo src/libs6ps/s6ps_grcache.lo src/libs6p
 endif
 s6-linux-utils: EXTRA_LIBS := ${SYSCLOCK_LIB} ${MAYBEPTHREAD_LIB}
 s6-linux-utils: src/multicall/s6-linux-utils.o libs6ps.a.xyzzy ${LIBNSSS} -lskarnet
+fstab2s6rc: EXTRA_LIBS :=
+fstab2s6rc: src/s6-linux-utils/fstab2s6rc.o -lskarnet
 rngseed: EXTRA_LIBS := ${SYSCLOCK_LIB}
 rngseed: src/s6-linux-utils/rngseed.o -lskarnet
 s6-chroot: EXTRA_LIBS :=

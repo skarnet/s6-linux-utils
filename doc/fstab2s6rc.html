@@ -1,0 +1,136 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="Content-Language" content="en" />
+    <title>s6-linux-utils: the fstab2s6rc program</title>
+    <meta name="Description" content="s6-linux-utils: the fstab2s6rc program" />
+    <meta name="Keywords" content="s6-rc fstab mount umount swapon swapoff swap filesystem boot offline conversion utility" />
+    <!-- <link rel="stylesheet" type="text/css" href="//skarnet.org/default.css" /> -->
+  </head>
+<body>
+
+<p>
+<a href="index.html">s6-linux-utils</a><br />
+<a href="//skarnet.org/software/">Software</a><br />
+<a href="//skarnet.org/">skarnet.org</a>
+</p>
+
+<h1> The <tt>fstab2s6rc</tt> program </h1>
+
+<p>
+ fstab2s6rc reads the <tt>/etc/fstab</tt> file, listing the filesystems and swap partitions
+to mount at boot time, and builds a set of service definition directories from it, meant to
+be fed to <a href="//skarnet.org/s6-rc/s6-rc-compile.html">s6-rc-compile</a>, having the
+effect of mounting these partitions when run by <a href="//skarnet.org/s6-rc/s6-rc.html">s6-rc</a>.
+</p>
+
+<p>
+ This method has several advantages over the classic <tt>mount -a</tt>:
+</p>
+
+<ul>
+ <li> Parallelization. Dependencies between the mount points are respected: if <tt>/var</tt>
+and <tt>/var/log</tt> are mount points in <tt>/etc/fstab</tt>, s6-rc will not attempt to
+mount <tt>/var/log</tt> before <tt>/var</tt> is successfully mounted. But apart from this
+necessary serialization, s6-rc will performs in parallel as much as it can. </li>
+ <li> Granularity. <tt>mount -a</tt> in the boot sequence treats all the mounts as one
+unit; and although the output of fstab2s6rc can provide a bundle listing all the mounts,
+each mount is available as a separate service. </li>
+</ul>
+
+<p>
+ fstab2s6rc is an <em>offline tool</em>. It does not perform mounts or unmounts itself;
+it just converts the data in <tt>/etc/fstab</tt>, which is in a format usable by <tt>mount</tt>,
+into a format usable &mdash; after compilation &mdash; by <a href="//skarnet.org/s6-rc/s6-rc.html">s6-rc</a>.
+</p>
+
+<h2> Interface </h2>
+
+<pre>
+     fstab2s6rc [ -A | -a ] [ -U | -u ] [ -E | -e ] [ -F <em>fstab</em> ] [ -m <em>mode</em> ] [ -B <em>bundle</em> ] [ -d <em>basedep</em> ] <em>dir</em>
+</pre>
+
+<ul>
+ <li> fstab2s6rc creates a directory <em>dir</em> in the filesystem to host all the service definition it will create.
+<em>dir/em> must not previously exist. </li>
+ <li> fstab2s6rc reads the <tt>/etc/fstab</tt> file. For every mount defined
+in the file, it creates a subdirectory of <em>dir</em> that is a suitable definition
+directory for an s6-rc service performing that mount. </li>
+ <li> The service is named after the mount point: the service mounting <tt>/var/log</tt>
+will be called <tt>mount-var:log</tt> (slashes being replaced with colons, first slash
+omitted). </li>
+ <li> For swap partitions, the partition named is used: the service activating swap on
+<tt>/dev/sda2</tt> will be called <tt>swap-dev:sda2</tt>. </li>
+</ul>
+
+<h2> Options </h2>
+
+<dl>
+ <dt> -F <em>fstab</em>, --fstab=<em>fstab</em> </dt>
+ <dd> Read mount point information from file <em>fstab</em> instead of <tt>/etc/fstab</tt>. </dd>
+
+ <dt> -m <em>mode</em>, --mode=<em>mode</em> </dt>
+ <dd> Create <em>dir</em> with permissions <em>mode</em>. <em>mode</em> is interpreted in octal. </dd>
+
+ <dt> -B <em>bundle</em>, --bundle=<em>bundle</em> </dt>
+ <dd> Create a bundle named <em>bundle</em> containing all the created services.
+The mount point services will also be grouped under a bundle named <tt><em>bundle</em>-mounts</tt>
+and the swap services will be grouped under a bundle named <tt><em>bundle</em>-swaps</tt>.
+Services marked <tt>noauto</tt> will not be included in these bundles. </dd>
+
+ <dt> -d <em>dep</em>, --base-dependency=<em>dep</em> </dt>
+ <dd> Add a dependency to a service named <em>dep</em> to all the created services.
+This is useful e.g. in a boot sequence to ensure that the mounts will not start before
+a certain point. </dd>
+
+ <dt> -A, --include-noauto </dt>
+ <dd> Include mount points and swaps marked <tt>noauto</tt> in the output. These
+services will not be marked as essential or recommended, and they will not be included
+in any bundle, but they will be there. This is the default. </dd>
+
+ <dt> -a, --exclude-noauto </dt>
+ <dd> Exclude mount points and swaps marked <tt>noauto</tt>. No service will be created
+for these fstab entries. </dd>
+
+ <dt> -U, --without-uuid </dt>
+ <dd> The created services will use s6-linux-utils commands such as
+<a href="s6-mount.html">s6-mount</a> and <a href="s6-swapon.html">s6-swapon</a>.
+This makes the created services only depend on s6-linux-utils, but the fstab
+entries must not contain util-linux-specific syntax such as <tt>UUID=</tt> or
+<tt>LABEL=</tt> in place of device names. This is the default. </dd>
+
+ <dt> -u, --with-uuid </dt>
+ <dd> The created services will use util-linux commands such as
+<a href="https://man7.org/linux/man-pages/man8/mount.8.html">mount</a> and
+<a href="https://man7.org/linux/man-pages/man8/swapon.8.html">swapon</a>. Running
+the services will depend on having such commands installed, but syntax
+for labels and uuids will be understood. </dd>
+
+ <dt> -E, --essential </dt>
+ <dd> Mark the services as essential, and do not create <tt>down</tt> scripts
+for them. This makes services suitable to be part of a base init sequence where
+all the listed filesystems are mounted early, and never unmounted until right
+before the machine reboots. (<tt>noauto</tt> entries will not be marked as
+essential.) This is the default. </dd>
+
+ <dt> -e, --not-essential </dt>
+ <dd> Mark the services as recommended rather than essential; create <tt>down</tt>
+scripts to unmount the filesystem. This makes services suitable for being called
+<em>later</em> than the base init sequence, as an optional part of a system's
+functionality. Stopping the services will unmount the
+corresponding filesystems and turn off the corresponding swap devices.
+<tt>noauto</tt> entries will not be marked as recommended. </dd>
+</dl>
+
+<h2> Exit codes </h2>
+
+<dl>
+ <dt> 0 </dt> <dd> Success. </dd>
+ <dt> 1 </dt> <dd> Invalid fstab file. </dd>
+ <dt> 100 </dt> <dd> Incorrect usage. </dd>
+ <dt> 111 </dt> <dd> system call failed </dd>
+</ul>
+
+</body>
+</html>

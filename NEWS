@@ -1,10 +1,11 @@
 Changelog for s6-linux-utils.
 
-In 2.6.3.1
+In 2.6.4.0
 ----------
 
  - Bugfixes.
  - Support of shared libraries on MacOS.
+ - New binary: fstab2s6rc.
 
 
 In 2.6.3.0

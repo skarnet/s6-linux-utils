@@ -1,3 +1,4 @@
+fstab2s6rc		0755
 rngseed			0744
 s6-chroot		0744
 s6-freeramdisk		0744

@@ -5,14 +5,15 @@
 #include <sys/swap.h>
 #include <errno.h>
 
+#include <skalibs/uint64.h>
 #include <skalibs/bytestr.h>
 #include <skalibs/buffer.h>
-#include <skalibs/strerr.h>
+#include <skalibs/envexec.h>
 #include <skalibs/stralloc.h>
 #include <skalibs/djbunix.h>
 #include <skalibs/skamisc.h>
 
-#define USAGE "s6-swapoff device <or> s6-swapoff -a"
+#define USAGE "s6-swapoff [ -a ] [ device ]"
 
 static int swapoffall (void)
 {
@@ -44,10 +45,17 @@ static int swapoffall (void)
 
 int main (int argc, char const *const *argv)
 {
+  static gol_bool const rgolb[] =
+  {
+    { .so = 'a', .lo = "all", .clear = 0, .set = 1 },
+  } ;
+  uint64_t wgolb = 0 ;
+  unsigned int golc ;
   PROG = "s6-swapoff" ;
-  if (argc < 2) strerr_dieusage(100, USAGE) ;
-  if ((argv[1][0] == '-') && (argv[1][1] == 'a') && !argv[1][2])
-    return swapoffall() ;
-  if (swapoff(argv[1]) == -1) strerr_diefu2sys(111, "swapoff ", argv[1]) ;
-  return 0 ;
+  golc = gol_main(argc, argv, rgolb, 1, 0, 0, &wgolb, 0) ;
+  argc -= golc ; argv += golc ;
+  if (wgolb & 1) _exit(swapoffall()) ;
+  if (!argc) strerr_dieusage(100, USAGE) ;
+  if (swapoff(argv[0]) == -1) strerr_diefu2sys(111, "swapoff ", argv[0]) ;
+  _exit(0) ;
 }

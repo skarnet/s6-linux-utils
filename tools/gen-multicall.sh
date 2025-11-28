@@ -9,7 +9,7 @@ echo '/* ISC license. */'
 echo
 echo '#include <skalibs/nonposix.h>'
 echo
-{ echo '#include <string.h>' ; echo '#include <stdlib.h>' ; cat src/$P/*.c | grep '^#include <' | grep -vF '<skalibs/' | grep -vF '<linux/' | grep -vF "<$P/" ; } | sort -u
+{ echo '#include <string.h>' ; echo '#include <stdlib.h>' ; cat src/$P/*.c | grep '^#include <' | grep -vF -e '<skalibs/' -e '<linux/' -e "<$P/" ; } | sort -u
 
 cat <<EOF
 
@@ -30,12 +30,6 @@ struct multicall_app_s
   emain_func_ref mainf ;
 } ;
 
-static int multicall_app_cmp (void const *a, void const *b)
-{
-  char const *name = a ;
-  multicall_app const *p = b ;
-  return strcmp(name, p->name) ;
-}
 EOF
 
 for i in `ls -1 src/$P/deps-exe` ; do
@@ -72,7 +66,7 @@ static int ${p}_main (int argc, char const *const *argv, char const *const *envp
   multicall_app const *p ;
   PROG = "$P" ;
   if (argc < 2) dieusage() ;
-  p = bsearch(argv[1], multicall_apps, sizeof(multicall_apps) / sizeof(multicall_app), sizeof(multicall_app), &multicall_app_cmp) ;
+  p = bsearch(argv[1], multicall_apps, sizeof(multicall_apps) / sizeof(multicall_app), sizeof(multicall_app), &str_bcmp) ;
   if (!p) strerr_dief2x(100, "unknown subcommand: ", argv[1]) ;
   return (*(p->mainf))(argc-1, argv+1, envp) ;
 }
@@ -82,7 +76,7 @@ int main (int argc, char const *const *argv, char const *const *envp)
   multicall_app const *p ;
   char const *name = strrchr(argv[0], '/') ;
   if (name) name++ ; else name = argv[0] ;
-  p = bsearch(name, multicall_apps, sizeof(multicall_apps) / sizeof(multicall_app), sizeof(multicall_app), &multicall_app_cmp) ;
+  p = bsearch(name, multicall_apps, sizeof(multicall_apps) / sizeof(multicall_app), sizeof(multicall_app), &str_bcmp) ;
   return p ? (*(p->mainf))(argc, argv, envp) : ${p}_main(argc, argv, envp) ;
 }
 EOF

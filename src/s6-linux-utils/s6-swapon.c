@@ -6,9 +6,10 @@
 #include <stdio.h>
 #include <mntent.h>
 
-#include <skalibs/strerr.h>
+#include <skalibs/uint64.h>
+#include <skalibs/envexec.h>
 
-#define USAGE "s6-swapon device <or> s6-swapon -a"
+#define USAGE "s6-swapon [ -a ] [ device ]"
 
 static int swaponall (void)
 {
@@ -28,11 +29,17 @@ static int swaponall (void)
 
 int main (int argc, char const *const *argv)
 {
+  static gol_bool const rgolb[] =
+  {
+    { .so = 'a', .lo = "all", .clear = 0, .set = 1 },
+  } ;
+  uint64_t wgolb = 0 ;
+  unsigned int golc ;
   PROG = "s6-swapon" ;
-  if (argc < 2) strerr_dieusage(100, USAGE) ;
-  if ((argv[1][0] == '-') && (argv[1][1] == 'a') && !argv[1][2])
-    return swaponall() ;
-  if (swapon(argv[1], 0) == -1)
-    strerr_diefu2sys(111, "swapon ", argv[1]) ;
-  return 0 ;
+  golc = gol_main(argc, argv, rgolb, 1, 0, 0, &wgolb, 0) ;
+  argc -= golc ; argv += golc ;
+  if (wgolb & 1) _exit(swaponall()) ;
+  if (!argc) strerr_dieusage(100, USAGE) ;
+  if (swapon(argv[0], 0) == -1) strerr_diefu2sys(111, "swapon ", argv[0]) ;
+  _exit(0) ;
 }
