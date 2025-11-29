@@ -90,7 +90,7 @@ static int process_device (stralloc *sa, char const *dev, uint32_t *flags)
   return 0 ;
 }
 
-static int process_opts (stralloc *sa, char *opts, uint32_t *flags)
+static int process_opts (stralloc *sa, char *opts, uint32_t *flags, size_t *start)
 {
   static char const *const ignore[] =
   {
@@ -114,7 +114,12 @@ static int process_opts (stralloc *sa, char *opts, uint32_t *flags)
       if (!stralloc_cats(sa, opts + pos) || !stralloc_catb(sa, ",", 1)) dienomem() ;
     pos += i+1 ;
   }
-  if (sa->len > sabase) sa->s[sa->len - 1] = 0 ;
+  if (sa->len > sabase)
+  {
+    sa->s[sa->len - 1] = 0 ;
+    *start = sabase ;
+  }
+  else *start = sabase - 1 ;
   return 0 ;
 }
 
@@ -125,28 +130,6 @@ static int process_servicename (stralloc *sa, char const *name, int isswap)
   if (!stralloc_cats(sa, isswap ? "swap-" : "mount-")) dienomem() ;
   while (i < len)
     if (!stralloc_catb(sa, name[i] == '/' ? ":" : name + i, 1)) dienomem() ;
-  return 0 ;
-}
-
-static inline int add_swap (struct mntent *mnt, genalloc *ga, stralloc *sa, uint64_t options)
-{
-  swapent f = { .flags = 0 } ;
-  int e ;
-  f.device = sa->len ;
-  if (options & FSTAB_GOLB_UUID)
-  {
-    e = process_device(sa, mnt->mnt_fsname, &f.flags) ;
-    if (e) return e ;
-  }
-  else
-    if (!string_quotes(sa, mnt->mnt_fsname) || !stralloc_0(sa)) dienomem() ;
-  f.opts = sa->len ;
-  e = process_opts(sa, mnt->mnt_opts, &f.flags) ;
-  if (e) return e ;
-  f.servicename = sa->len ;
-  e = process_servicename(sa, mnt->mnt_fsname, 1) ;
-  if (e) return e ;
-  if (genalloc_catb(swapent, ga, &f, 1)) dienomem() ;
   return 0 ;
 }
 
@@ -192,15 +175,39 @@ static inline int add_fs (struct mntent *mnt, genalloc *root, stralloc *sa, uint
   if (!stralloc_cats(sa, mnt->mnt_dir + 1) || !stralloc_0(sa)) dienomem() ;
   f.qmountpoint = sa->len ;
   if (!string_quotes(sa, mnt->mnt_dir) || !stralloc_0(sa)) dienomem() ;
-  f.type = sa->len ;
-  if (!stralloc_cats(sa, mnt->mnt_type) || !stralloc_0(sa)) dienomem() ;
-  f.opts = sa->len ;
-  e = process_opts(sa, mnt->mnt_opts, &f.flags) ;
+  if (!strcmp(mnt->mnt_type, "none")) f.type = sa->len - 1 ;
+  else
+  {
+    f.type = sa->len ;
+    if (!stralloc_cats(sa, mnt->mnt_type) || !stralloc_0(sa)) dienomem() ;
+  }
+  e = process_opts(sa, mnt->mnt_opts, &f.flags, &f.opts) ;
   if (e) return e ;
   f.servicename = sa->len ;
   e = process_servicename(sa, mnt->mnt_dir, 0) ;
   if (e) return e ;
   return fstab_insert_mount(&f, root, sa->s) ;
+}
+
+static inline int add_swap (struct mntent *mnt, genalloc *ga, stralloc *sa, uint64_t options)
+{
+  swapent f = { .flags = 0 } ;
+  int e ;
+  f.device = sa->len ;
+  if (options & FSTAB_GOLB_UUID)
+  {
+    e = process_device(sa, mnt->mnt_fsname, &f.flags) ;
+    if (e) return e ;
+  }
+  else
+    if (!string_quotes(sa, mnt->mnt_fsname) || !stralloc_0(sa)) dienomem() ;
+  e = process_opts(sa, mnt->mnt_opts, &f.flags, &f.opts) ;
+  if (e) return e ;
+  f.servicename = sa->len ;
+  e = process_servicename(sa, mnt->mnt_fsname, 1) ;
+  if (e) return e ;
+  if (genalloc_catb(swapent, ga, &f, 1)) dienomem() ;
+  return 0 ;
 }
 
 static int write_dependencies (char const *dir, char const *myname, fsent const *tab, size_t n, char const *s)
@@ -310,8 +317,11 @@ static inline int write_fses (char const *dir, fsent const *tab, size_t n, char 
     {
       if (buffer_puts(&b, S6_LINUX_UTILS_BINPREFIX "s6-mount") < 0) goto err2 ;
     }
-    if (buffer_puts(&b, " -t ") < 0
-     || buffer_puts(&b, s + tab[i].type) < 0) goto err2 ;
+    if (s[tab[i].type])
+    {
+      if (buffer_puts(&b, " -t ") < 0
+       || buffer_puts(&b, s + tab[i].type) < 0) goto err2 ;
+    }
     if (s[tab[i].opts])
     {
       if (buffer_puts(&b, " -o ") < 0
