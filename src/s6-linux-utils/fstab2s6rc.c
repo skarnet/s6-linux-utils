@@ -52,8 +52,8 @@ enum fstab_flags_e
   FSTAB_FLAG_ISLABEL = 0x08,
 } ;
 
-typedef struct fstabent_s fstabent, *fstabent_ref ;
-struct fstabent_s
+typedef struct fsent_s fsent, *fsent_ref ;
+struct fsent_s
 {
   size_t device ;
   size_t mountpoint ;
@@ -62,9 +62,8 @@ struct fstabent_s
   size_t opts ;
   size_t servicename ;
   uint32_t flags ;
-  genalloc sublist ;  /* fstabent */
+  genalloc sublist ;  /* fsent */
 } ;
-#define FSTABENT_ZERO { .submounts = GENALLOC_ZERO }
 
 typedef struct swapent_s swapent, *swapent_ref ;
 struct swapent_s
@@ -75,15 +74,14 @@ struct swapent_s
   uint32_t flags ;
 } ;
 
-
 static int process_device (stralloc *sa, char const *dev, uint32_t *flags)
 {
-  if (str_start(dev, "UUID="))
+  if (!strncmp(dev, "UUID=", 5))
   {
     if (!stralloc_cats(sa, dev + 5) || !stralloc_0(sa)) dienomem() ;
     *flags |= FSTAB_FLAG_ISUUID ;
   }
-  else if (str_start(dev, "LABEL="))
+  else if (!strncmp(dev, "LABEL=", 6))
   {
     if (!string_quotes(sa, dev + 6) || !stralloc_0(sa)) dienomem() ;
     *flags |= FSTAB_FLAG_ISLABEL ;
@@ -123,7 +121,7 @@ static int process_opts (stralloc *sa, char *opts, uint32_t *flags)
 static int process_servicename (stralloc *sa, char const *name, int isswap)
 {
   size_t len = strlen(name) + 1 ;
-  size_t i = name[0] == '/' ? 1 : 0 ;
+  size_t i = name[0] == '/' ;
   if (!stralloc_cats(sa, isswap ? "swap-" : "mount-")) dienomem() ;
   while (i < len)
     if (!stralloc_catb(sa, name[i] == '/' ? ":" : name + i, 1)) dienomem() ;
@@ -152,34 +150,36 @@ static inline int add_swap (struct mntent *mnt, genalloc *ga, stralloc *sa, uint
   return 0 ;
 }
 
-static genalloc *findpoint (char const *dir, genalloc *ga, char const *s)
+static int fstab_insert_mount (fsent *me, genalloc *ga, char const *s)
 {
-  size_t n = genalloc_len(fstabent, ga) ;
-  fstabent *t = genalloc_s(fstabent, ga) ;
+  size_t mylen = strlen(s + me->mountpoint) ;
+  fsent *t = genalloc_s(fsent, ga) ;
+  unsigned int n = genalloc_len(fsent, ga) ;
   for (unsigned int i = 0 ; i < n ; i++)
   {
     size_t fslen = strlen(s + t[i].mountpoint) ;
-    if (!strncmp(dir, s + t[i].mountpoint, fslen))
+    if (mylen == fslen && !memcmp(s + me->mountpoint, s + t[i].mountpoint, mylen))
     {
-      if (!dir[fslen])
-      {
-        strerr_warnfu2x("duplicate mount point: ", dir) ;
-        return 0 ;
-      }
-      if (dir[fslen] == '/')
-        return findpoint(dir, &t[i].sublist, s) ;
+      strerr_warnf2x("duplicate mount point: ", s + me->mountpoint) ;
+      return 1 ;
     }
+    if (mylen < fslen && !strncmp(s + t[i].mountpoint, s + me->mountpoint, mylen) && s[t[i].mountpoint + mylen] == '/')
+    {
+      if (!genalloc_catb(fsent, &me->sublist, t + i, 1)) dienomem() ;
+      t[i] = *me ;
+      return 0 ;
+    }
+    if (mylen > fslen && !strncmp(s + me->mountpoint, s + t[i].mountpoint, fslen) && s[me->mountpoint + fslen] == '/')
+      return fstab_insert_mount(me, &t[i].sublist, s) ;
   }
-  return ga ;
+  if (!genalloc_catb(fsent, ga, me, 1)) dienomem() ;
+  return 0 ;
 }
 
-static inline int add_fs (struct mntent *mnt, genalloc *ga, stralloc *sa, uint64_t options)
+static inline int add_fs (struct mntent *mnt, genalloc *root, stralloc *sa, uint64_t options)
 {
-  fstabent f = { .flags = 0 } ;
+  fsent f = { .flags = 0, .sublist = GENALLOC_ZERO } ;
   int e ;
-  ga = findpoint(mnt->mnt_dir, ga, sa->s) ;
-  if (!ga) return 1 ;
-
   f.device = sa->len ;
   if (options & FSTAB_GOLB_UUID)
   {
@@ -189,7 +189,7 @@ static inline int add_fs (struct mntent *mnt, genalloc *ga, stralloc *sa, uint64
   else
     if (!string_quotes(sa, mnt->mnt_fsname) || !stralloc_0(sa)) dienomem() ;
   f.mountpoint = sa->len ;
-  if (!stralloc_cats(sa, mnt->mnt_dir) || !stralloc_0(sa)) dienomem() ;
+  if (!stralloc_cats(sa, mnt->mnt_dir + 1) || !stralloc_0(sa)) dienomem() ;
   f.qmountpoint = sa->len ;
   if (!string_quotes(sa, mnt->mnt_dir) || !stralloc_0(sa)) dienomem() ;
   f.type = sa->len ;
@@ -200,11 +200,10 @@ static inline int add_fs (struct mntent *mnt, genalloc *ga, stralloc *sa, uint64
   f.servicename = sa->len ;
   e = process_servicename(sa, mnt->mnt_dir, 0) ;
   if (e) return e ;
-  if (!genalloc_catb(fstabent, ga, &f, 1)) dienomem() ;
-  return 0 ;
+  return fstab_insert_mount(&f, root, sa->s) ;
 }
 
-static int write_dependencies (char const *dir, char const *myname, fstabent const *tab, size_t n, char const *s)
+static int write_dependencies (char const *dir, char const *myname, fsent const *tab, size_t n, char const *s)
 {
   size_t dirlen = strlen(dir) ;
   size_t mylen = myname ? strlen(myname) : 0 ;
@@ -223,13 +222,13 @@ static int write_dependencies (char const *dir, char const *myname, fstabent con
       memcpy(fn + dirlen + slen + 17, myname, mylen + 1) ;
       if (!openwritenclose_unsafe5(fn, "", 0, 0, 0)) { strerr_warnfu2sys("touch ", fn) ; return 111 ; }
     }
-    e = write_dependencies(dir, s + tab[i].servicename, genalloc_s(fstabent, &tab[i].sublist), genalloc_len(fstabent, &tab[i].sublist), s) ;
+    e = write_dependencies(dir, s + tab[i].servicename, genalloc_s(fsent, &tab[i].sublist), genalloc_len(fsent, &tab[i].sublist), s) ;
     if (e) return e ;
   }
   return 0 ;
 }
 
-static inline int write_fses (char const *dir, fstabent const *tab, size_t n, char const *s, uint64_t options, char const *bundle, char const *basedep)
+static inline int write_fses (char const *dir, fsent const *tab, size_t n, char const *s, uint64_t options, char const *bundle, char const *basedep)
 {
   char buf[4096] ;
   buffer b ;
@@ -537,22 +536,22 @@ static inline int write_bundle (char const *dir, char const *bundle)
 
 static inline int doit (char const *fstab, char const *dir, uint64_t options, char const *bundle, char const *basedep, stralloc *sa)
 {
-  genalloc fses = GENALLOC_ZERO ;  /* fstabent */
-  genalloc swaps = GENALLOC_ZERO ; /* swapent */
+  genalloc rootfs = GENALLOC_ZERO ;  /* fsent */
+  genalloc swaps = GENALLOC_ZERO ;  /* swapent */
   int e ;
-  
   FILE *in = setmntent(fstab, "re") ;
+  if (!in) { strerr_warnfu2sys("open ", fstab) ; return 111 ; }
   for (;;)
   {
     struct mntent *mnt ;
     errno = 0 ;
     mnt = getmntent(in) ;
     if (!mnt) break ;
+    if (mnt->mnt_dir[0] != '/') continue ;  /* "none" or "swap" or ... */
+    if (!mnt->mnt_dir[1]) continue ;  /* skip rootfs */
     if (options & FSTAB_GOLB_SKIPNOAUTO && hasmntopt(mnt, "noauto")) continue ;
-    if (strcmp(mnt->mnt_type, "swap"))
-      e = add_fs(mnt, &fses, sa, options) ;
-    else
-      e = add_swap(mnt, &swaps, sa, options) ;
+    if (!strcmp(mnt->mnt_type, "swap")) e = add_swap(mnt, &swaps, sa, options) ;
+    else e = add_fs(mnt, &rootfs, sa, options) ;
     if (e)
     {
       endmntent(in) ;
@@ -563,11 +562,11 @@ static inline int doit (char const *fstab, char const *dir, uint64_t options, ch
   {
     strerr_warnfu2sys("getmntent ", fstab) ;
     endmntent(in) ;
-    return e ;
+    return 111 ;
   }
   endmntent(in) ;
 
-  e = write_fses(dir, genalloc_s(fstabent, &fses), genalloc_len(fstabent, &fses), sa->s, options, bundle, basedep) ;
+  e = write_fses(dir, genalloc_s(fsent, &rootfs), genalloc_len(fsent, &rootfs), sa->s, options, bundle, basedep) ;
   if (e) return e ;
   e = write_swaps(dir, genalloc_s(swapent, &swaps), genalloc_len(swapent, &swaps), sa->s, options, bundle, basedep) ;
   if (e) return e ;
@@ -576,7 +575,6 @@ static inline int doit (char const *fstab, char const *dir, uint64_t options, ch
     e = write_bundle(dir, bundle) ;
     if (e) return e ;
   }
-
   return 0 ;
 }
 
