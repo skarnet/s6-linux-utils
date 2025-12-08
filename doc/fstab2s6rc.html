@@ -77,7 +77,7 @@ omitted). </li>
  <dd> Create a bundle named <em>bundle</em> containing all the created services.
 The mount point services will also be grouped under a bundle named <tt><em>bundle</em>-mounts</tt>
 and the swap services will be grouped under a bundle named <tt><em>bundle</em>-swaps</tt>.
-Services marked <tt>noauto</tt> will not be included in these bundles. </dd>
+fstab lines that have the <tt>noauto</tt> option will not be included in these bundles. </dd>
 
  <dt> -d <em>dep</em>, --base-dependency=<em>dep</em> </dt>
  <dd> Add a dependency to a service named <em>dep</em> to all the created services.
@@ -98,7 +98,9 @@ for these fstab entries. </dd>
 <a href="s6-mount.html">s6-mount</a> and <a href="s6-swapon.html">s6-swapon</a>.
 This makes the created services only depend on s6-linux-utils, but the fstab
 entries must not contain util-linux-specific syntax such as <tt>UUID=</tt> or
-<tt>LABEL=</tt> in place of device names. This is the default. </dd>
+<tt>LABEL=</tt> in place of device names (if they do, the fstab2s6rc invocation
+will work, but will generate nonsensical commands, interpreting the device
+names literally). This is the default. </dd>
 
  <dt> -u, --with-uuid </dt>
  <dd> The created services will use util-linux commands such as
@@ -129,7 +131,7 @@ corresponding filesystems and turn off the corresponding swap devices.
  <dt> 0 </dt> <dd> Success. </dd>
  <dt> 1 </dt> <dd> Invalid fstab file. </dd>
  <dt> 100 </dt> <dd> Incorrect usage. </dd>
- <dt> 111 </dt> <dd> system call failed </dd>
+ <dt> 111 </dt> <dd> System call failed. </dd>
 </ul>
 
 </body>

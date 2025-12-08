@@ -61,6 +61,7 @@ struct fsent_s
   size_t type ;
   size_t opts ;
   size_t servicename ;
+  size_t binddep ;
   uint32_t flags ;
   genalloc sublist ;  /* fsent */
 } ;
@@ -71,6 +72,7 @@ struct swapent_s
   size_t device ;
   size_t opts ;
   size_t servicename ;
+  size_t binddep ;
   uint32_t flags ;
 } ;
 
@@ -78,7 +80,7 @@ static int process_device (stralloc *sa, char const *dev, uint32_t *flags)
 {
   if (!strncmp(dev, "UUID=", 5))
   {
-    if (!stralloc_cats(sa, dev + 5) || !stralloc_0(sa)) dienomem() ;
+    if (!string_quotes(sa, dev + 5) || !stralloc_0(sa)) dienomem() ;
     *flags |= FSTAB_FLAG_ISUUID ;
   }
   else if (!strncmp(dev, "LABEL=", 6))
@@ -102,6 +104,7 @@ static int process_opts (stralloc *sa, char *opts, uint32_t *flags, size_t *star
   size_t sabase = sa->len ;
   size_t len = strlen(opts) ;
   size_t pos = 0 ;
+  if (!stralloc_catb(sa, "\"", 1)) dienomem() ;
   while (pos < len)
   {
     size_t i = str_chr(opts + pos, ',') ;
@@ -111,12 +114,13 @@ static int process_opts (stralloc *sa, char *opts, uint32_t *flags, size_t *star
     else if (!strcmp(opts + pos, "noauto")) *flags |= FSTAB_FLAG_NOAUTO ;
     else if (bsearch(opts + pos, ignore, sizeof(ignore)/sizeof(char const *), sizeof(char const *), &str_bcmp)) ;
     else
-      if (!stralloc_cats(sa, opts + pos) || !stralloc_catb(sa, ",", 1)) dienomem() ;
+      if (!string_quote_nodelim(sa, opts + pos, strlen(opts + pos)) || !stralloc_catb(sa, ",", 1)) dienomem() ;
     pos += i+1 ;
   }
-  if (sa->len > sabase)
+  if (sa->len > sabase + 1)
   {
-    sa->s[sa->len - 1] = 0 ;
+    sa->s[sa->len - 1] = 0x22 ;  /* nobody should have to remember how to quote " characters */
+    if (!stralloc_0(sa)) dienomem() ;
     *start = sabase ;
   }
   else *start = sabase - 1 ;
@@ -128,9 +132,23 @@ static int process_servicename (stralloc *sa, char const *name, int isswap)
   size_t len = strlen(name) + 1 ;
   size_t i = name[0] == '/' ;
   if (!stralloc_cats(sa, isswap ? "swap-" : "mount-")) dienomem() ;
-  while (i < len)
+  for (; i < len ; i++)
     if (!stralloc_catb(sa, name[i] == '/' ? ":" : name + i, 1)) dienomem() ;
   return 0 ;
+}
+
+static void adjust_binddep (size_t *binddep, char const *device, fsent const *tab, unsigned int n, char const *s)
+{
+  for (unsigned int i = 0 ; i < n ; i++)
+  {
+    size_t mntlen = strlen(s + tab[i].mountpoint) ;
+    if (!strncmp(device, s + tab[i].mountpoint, mntlen) && device[mntlen] == '/')
+    {
+      *binddep = tab[i].servicename ;
+      adjust_binddep(binddep, device, genalloc_s(fsent, &tab[i].sublist), genalloc_len(fsent, &tab[i].sublist), s) ;
+      return ;
+    }
+  }
 }
 
 static int fstab_insert_mount (fsent *me, genalloc *ga, char const *s)
@@ -153,7 +171,9 @@ static int fstab_insert_mount (fsent *me, genalloc *ga, char const *s)
       return 0 ;
     }
     if (mylen > fslen && !strncmp(s + me->mountpoint, s + t[i].mountpoint, fslen) && s[me->mountpoint + fslen] == '/')
+    {
       return fstab_insert_mount(me, &t[i].sublist, s) ;
+    }
   }
   if (!genalloc_catb(fsent, ga, me, 1)) dienomem() ;
   return 0 ;
@@ -163,6 +183,11 @@ static inline int add_fs (struct mntent *mnt, genalloc *root, stralloc *sa, uint
 {
   fsent f = { .flags = 0, .sublist = GENALLOC_ZERO } ;
   int e ;
+  if (mnt->mnt_dir[0] != '/')
+  {
+    strerr_warnf2x("relative mountpoint in fstab: ", mnt->mnt_dir) ;
+    return 1 ;
+  }
   f.device = sa->len ;
   if (options & FSTAB_GOLB_UUID)
   {
@@ -179,17 +204,19 @@ static inline int add_fs (struct mntent *mnt, genalloc *root, stralloc *sa, uint
   else
   {
     f.type = sa->len ;
-    if (!stralloc_cats(sa, mnt->mnt_type) || !stralloc_0(sa)) dienomem() ;
+    if (!string_quotes(sa, mnt->mnt_type) || !stralloc_0(sa)) dienomem() ;
   }
   e = process_opts(sa, mnt->mnt_opts, &f.flags, &f.opts) ;
   if (e) return e ;
   f.servicename = sa->len ;
   e = process_servicename(sa, mnt->mnt_dir, 0) ;
   if (e) return e ;
+  f.binddep = sa->len - 1 ;
+  if (mnt->mnt_fsname[0] == '/' && hasmntopt(mnt, "bind")) adjust_binddep(&f.binddep, mnt->mnt_fsname + 1, genalloc_s(fsent, root), genalloc_len(fsent, root), sa->s) ;
   return fstab_insert_mount(&f, root, sa->s) ;
 }
 
-static inline int add_swap (struct mntent *mnt, genalloc *ga, stralloc *sa, uint64_t options)
+static inline int add_swap (struct mntent *mnt, genalloc *ga, stralloc *sa, uint64_t options, fsent const *mnts, unsigned int mntn)
 {
   swapent f = { .flags = 0 } ;
   int e ;
@@ -206,61 +233,101 @@ static inline int add_swap (struct mntent *mnt, genalloc *ga, stralloc *sa, uint
   f.servicename = sa->len ;
   e = process_servicename(sa, mnt->mnt_fsname, 1) ;
   if (e) return e ;
-  if (genalloc_catb(swapent, ga, &f, 1)) dienomem() ;
+  f.binddep = sa->len - 1 ;
+  if (mnt->mnt_fsname[0] == '/')
+    adjust_binddep(&f.binddep, mnt->mnt_fsname + 1, mnts, mntn, sa->s) ;
+  if (!genalloc_catb(swapent, ga, &f, 1)) dienomem() ;
   return 0 ;
 }
 
-static int write_dependencies (char const *dir, char const *myname, fsent const *tab, size_t n, char const *s)
+static int write_fs_structure (char const *dir, fsent const *mnts, unsigned int mntn, char const *s)
 {
   size_t dirlen = strlen(dir) ;
-  size_t mylen = myname ? strlen(myname) : 0 ;
-  int e ;
-
-  for (size_t i = 0 ; i < n ; i++)
+  for (unsigned int i = 0 ; i < mntn ; i++)
   {
-    if (myname)
-    {
-      size_t slen = strlen(s + tab[i].servicename) ;
-      char fn[dirlen + 18 + slen + mylen] ;
-      memcpy(fn, dir, dirlen) ;
-      fn[dirlen] = '/' ;
-      memcpy(fn + dirlen + 1, s + tab[i].servicename, slen) ;
-      memcpy(fn + dirlen + 1 + slen, "/dependencies.d/", 16) ;
-      memcpy(fn + dirlen + slen + 17, myname, mylen + 1) ;
-      if (!openwritenclose_unsafe5(fn, "", 0, 0, 0)) { strerr_warnfu2sys("touch ", fn) ; return 111 ; }
-    }
-    e = write_dependencies(dir, s + tab[i].servicename, genalloc_s(fsent, &tab[i].sublist), genalloc_len(fsent, &tab[i].sublist), s) ;
+    int e ;
+    size_t slen = strlen(s + mnts[i].servicename) ;
+    char fn[dirlen + slen + 19] ;
+    memcpy(fn, dir, dirlen) ;
+    fn[dirlen] = '/' ;
+    memcpy(fn + dirlen + 1, s + mnts[i].servicename, slen + 1) ;
+    if (mkdir(fn, 0755) == -1) { strerr_warnfu2sys("mkdir ", fn) ; return 111 ; }
+    memcpy(fn + dirlen + 1 + slen, "/dependencies.d", 16) ;
+    if (mkdir(fn, 0755) == -1) { strerr_warnfu2sys("mkdir ", fn) ; return 111 ; }
+    e = write_fs_structure(dir, genalloc_s(fsent, &mnts[i].sublist), genalloc_len(fsent, &mnts[i].sublist), s) ;
     if (e) return e ;
   }
   return 0 ;
 }
 
-static inline int write_fses (char const *dir, fsent const *tab, size_t n, char const *s, uint64_t options, char const *bundle, char const *basedep)
+static int write_structure (char const *dir, fsent const *mnts, unsigned int mntn, swapent const *swaps, unsigned int swapn, char const *s, char const *bundle)
+{
+  size_t dirlen = strlen(dir) ;
+  mode_t m = umask(0) ;
+  int e = write_fs_structure(dir, mnts, mntn, s) ;
+  if (e) goto end ;
+  for (unsigned int i = 0 ; i < swapn ; i++)
+  {
+    size_t slen = strlen(s + swaps[i].servicename) ;
+    char fn[dirlen + slen + 19] ;
+    memcpy(fn, dir, dirlen) ;
+    fn[dirlen] = '/' ;
+    memcpy(fn + dirlen + 1, s + swaps[i].servicename, slen + 1) ;
+    if (mkdir(fn, 0755) == -1) { strerr_warnfu2sys("mkdir ", fn) ; goto err ; }
+    memcpy(fn + dirlen + 1 + slen, "/dependencies.d", 16) ;
+    if (mkdir(fn, 0755) == -1) { strerr_warnfu2sys("mkdir ", fn) ; goto err ; }
+  }
+  if (bundle)
+  {
+    size_t blen = strlen(bundle) ;
+    char bdir[dirlen + blen + 20] ;
+    memcpy(bdir, dir, dirlen) ;
+    bdir[dirlen] = '/' ;
+    memcpy(bdir + dirlen + 1, bundle, blen + 1) ;
+    if (mkdir(bdir, 0755) == -1) { strerr_warnfu2sys("mkdir ", bdir) ; goto err ; }
+    memcpy(bdir + dirlen + 1 + blen, "/contents.d", 12) ;
+    if (mkdir(bdir, 0755) == -1) { strerr_warnfu2sys("mkdir ", bdir) ; goto err ; }
+    memcpy(bdir + dirlen + 1 + blen, "-mounts", 8) ;
+    if (mkdir(bdir, 0755) == -1) { strerr_warnfu2sys("mkdir ", bdir) ; goto err ; }
+    memcpy(bdir + dirlen + 8 + blen, "/contents.d", 12) ;
+    if (mkdir(bdir, 0755) == -1) { strerr_warnfu2sys("mkdir ", bdir) ; goto err ; }
+    memcpy(bdir + dirlen + 1 + blen, "-swaps", 7) ;
+    if (mkdir(bdir, 0755) == -1) { strerr_warnfu2sys("mkdir ", bdir) ; goto err ; }
+    memcpy(bdir + dirlen + 7 + blen, "/contents.d", 12) ;
+    if (mkdir(bdir, 0755) == -1) { strerr_warnfu2sys("mkdir ", bdir) ; goto err ; }
+  }
+  goto end ;
+ err:
+   e = 111 ;
+ end:
+  umask(m) ;
+  return e ;
+}
+
+static inline int write_fses (char const *dir, fsent const *tab, unsigned int n, char const *s, uint64_t options, char const *bundle, char const *basedep)
 {
   char buf[4096] ;
   buffer b ;
   int fd ;
   size_t dirlen = strlen(dir) ;
-  for (size_t i = 0 ; i < n ; i++)
+  size_t bdlen = basedep ? strlen(basedep) : 0 ;
+  size_t blen = bundle ? strlen(bundle) : 0 ;
+
+  for (unsigned int i = 0 ; i < n ; i++)
   {
-    mode_t m = umask(0) ;
     size_t slen = strlen(s + tab[i].servicename) ;
-    char fn[dirlen + slen + 19] ;
+    size_t dlen = strlen(s + tab[i].binddep) ;
+    char fn[dirlen + slen + bdlen + blen + dlen + 21] ;
     memcpy(fn, dir, dirlen) ;
     fn[dirlen] = '/' ;
-    memcpy(fn + dirlen + 1, s + tab[i].servicename, slen + 1) ;
-    if (mkdir(fn, 0755) == -1) { strerr_warnfu2sys("mkdir ", fn) ; return 111 ; }
-    memcpy(fn + dirlen + 1 + slen, "/dependencies.d", 16) ;
-    if (mkdir(fn, 0755) == -1) { strerr_warnfu2sys("mkdir ", fn) ; return 111 ; }
-    umask(m) ;
-
-    memcpy(fn + dirlen + 2 + slen, "type", 5) ;
+    memcpy(fn + dirlen + 1, s + tab[i].servicename, slen) ;
+    memcpy(fn + dirlen + 1 + slen, "/type", 6) ;
     if (!openwritenclose_unsafe5(fn, "oneshot\n", 8, 0, 0)) goto err1n ;
 
     if (!(tab[i].flags & FSTAB_FLAG_NOAUTO))
     {
       memcpy(fn + dirlen + 2 + slen, "flag-", 5) ;
-      memcpy(fn + dirlen + 7 + slen, options & FSTAB_GOLB_NOESSENTIAL ? "essential" : "recommended", options & FSTAB_GOLB_NOESSENTIAL ? 10 : 12) ;
+      memcpy(fn + dirlen + 7 + slen, options & FSTAB_GOLB_NOESSENTIAL ? "recommended" : "essential", options & FSTAB_GOLB_NOESSENTIAL ? 12 : 10) ;
       if (!openwritenclose_unsafe5(fn, "", 0, 0, 0)) goto err1n ;
     }
 
@@ -338,78 +405,72 @@ static inline int write_fses (char const *dir, fsent const *tab, size_t n, char 
       if (buffer_puts(&b, " }\n" EXECLINE_EXTBINPREFIX "exit 0") < 0) goto err2 ;
     if (buffer_putflush(&b, "\n", 1) < 0) goto err2 ;
     fd_close(fd) ;
-    goto ok2 ;
+
+    if (dlen)
+    {
+      memcpy(fn + dirlen + 1 + slen, "/dependencies.d/", 16) ;
+      memcpy(fn + dirlen + slen + 17, s + tab[i].binddep, dlen + 1) ;
+      if (!openwritenclose_unsafe5(fn, "", 0, 0, 0)) goto err3 ;
+    }
+
+    if (basedep)
+    {
+      memcpy(fn + dirlen + 1 + slen, "/dependencies.d/", 16) ;
+      memcpy(fn + dirlen + slen + 17, basedep, bdlen + 1) ;
+      if (!openwritenclose_unsafe5(fn, "", 0, 0, 0)) goto err3 ;
+    }
+
+    if (bundle && !(tab[i].flags & FSTAB_FLAG_NOAUTO))
+    {
+      memcpy(fn + dirlen + 1, bundle, blen) ;
+      memcpy(fn + dirlen + 1 + blen, "-mounts/contents.d/", 19) ;
+      memcpy(fn + dirlen + blen + 20, s + tab[i].servicename, slen + 1) ;
+      if (!openwritenclose_unsafe5(fn, "", 0, 0, 0)) goto err3 ;
+    }
+
+    for (unsigned int j = 0 ; j < genalloc_len(fsent, &tab[i].sublist) ; j++)
+    {
+      int e = write_fses(dir, genalloc_s(fsent, &tab[i].sublist), genalloc_len(fsent, &tab[i].sublist), s, options, bundle, s + tab[i].servicename) ;
+      if (e) return e ;
+    }
+    continue ;
+
+   err3:
+    strerr_warnfu2sys("touch ", fn) ;
+    return 111 ;
    err2:
     fd_close(fd) ;
    err2n:
     strerr_warnfu2sys("write to ", fn) ;
     return 111 ;
-   ok2:
   }
 
-  if (bundle)
-  {
-    mode_t m = umask(0) ;
-    size_t blen = strlen(bundle) ;
-    char bdir[dirlen + blen + 20] ;
-    memcpy(bdir, dir, dirlen) ;
-    memcpy(bdir + dirlen, "-mounts", 7) ;
-    bdir[dirlen + 7] = '/' ;
-    memcpy(bdir + dirlen + 7, bundle, blen + 1) ;
-    if (mkdir(bdir, 0755) == -1) { strerr_warnfu2sys("mkdir ", bdir) ; return 111 ; }
-    memcpy(bdir + dirlen + blen + 8, "/type", 6) ;
-    if (!openwritenclose_unsafe5(bdir, "bundle\n", 7, 0, 0)) { strerr_warnfu2sys("write to ", bdir) ; return 111 ; }
-    memcpy(bdir + dirlen + blen + 8, "contents.d", 11) ;
-    if (mkdir(bdir, 0755) == -1) { strerr_warnfu2sys("mkdir ", bdir) ; return 111 ; }
-    umask(m) ;
-    bdir[dirlen + blen + 19] = '/' ;
-    for (size_t i = 0 ; i < n ; i++) if (!(tab[i].flags & FSTAB_FLAG_NOAUTO))
-    {
-      size_t slen = strlen(s + tab[i].servicename) ;
-      char sfn[dirlen + blen + 21 + slen] ;
-      memcpy(sfn, bdir, dirlen + blen + 20) ;
-      memcpy(sfn + dirlen + blen + 20, s + tab[i].servicename, slen + 1) ;
-      if (!openwritenclose_unsafe5(sfn, "", 0, 0, 0)) { strerr_warnfu2sys("touch ", sfn) ; return 111 ; }
-    }
-  }
-
-  return write_dependencies(dir, basedep, tab, n, s) ;
+  return 0 ;
 }
 
-static inline int write_swaps (char const *dir, swapent const *tab, size_t n, char const *s, uint64_t options, char const *bundle, char const *basedep)
+static inline int write_swaps (char const *dir, swapent const *tab, unsigned int n, char const *s, uint64_t options, char const *bundle, char const *basedep)
 {
   char buf[4096] ;
   buffer b ;
   int fd ;
   size_t dirlen = strlen(dir) ;
+  size_t blen = bundle ? strlen(bundle) : 0 ;
   size_t bdlen = basedep ? strlen(basedep) : 0 ;
-  for (size_t i = 0 ; i < n ; i++)
+  for (unsigned int i = 0 ; i < n ; i++)
   {
-    mode_t m = umask(0) ;
     size_t slen = strlen(s + tab[i].servicename) ;
-    char fn[dirlen + slen + 19 + bdlen] ;
+    size_t dlen = strlen(s + tab[i].binddep) ;
+    char fn[dirlen + slen + bdlen + blen + dlen + 20] ;
     memcpy(fn, dir, dirlen) ;
     fn[dirlen] = '/' ;
-    memcpy(fn + dirlen + 1, s + tab[i].servicename, slen + 1) ;
-    if (mkdir(fn, 0755) == -1) { strerr_warnfu2sys("mkdir ", fn) ; return 111 ; }
-    memcpy(fn + dirlen + 1 + slen, "/dependencies.d", 16) ;
-    if (mkdir(fn, 0755) == -1) { strerr_warnfu2sys("mkdir ", fn) ; return 111 ; }
-    umask(m) ;
-
-    if (basedep)
-    {
-      fn[dirlen + slen + 16] = '/' ;
-      memcpy(fn + dirlen + slen + 17, basedep, bdlen + 1) ;
-      if (!openwritenclose_unsafe5(fn, "", 0, 0, 0)) goto err1n ;
-    }
-
-    memcpy(fn + dirlen + 2 + slen, "type", 5) ;
+    memcpy(fn + dirlen + 1, s + tab[i].servicename, slen) ;
+    memcpy(fn + dirlen + 1 + slen, "/type", 6) ;
     if (!openwritenclose_unsafe5(fn, "oneshot\n", 8, 0, 0)) goto err1n ;
 
     if (!(tab[i].flags & FSTAB_FLAG_NOAUTO))
     {
       memcpy(fn + dirlen + 2 + slen, "flag-", 5) ;
-      memcpy(fn + dirlen + 7 + slen, options & FSTAB_GOLB_NOESSENTIAL ? "essential" : "recommended", options & FSTAB_GOLB_NOESSENTIAL ? 10 : 12) ;
+      memcpy(fn + dirlen + 7 + slen, options & FSTAB_GOLB_NOESSENTIAL ? "recommended" : "essential", options & FSTAB_GOLB_NOESSENTIAL ? 12 : 10) ;
       if (!openwritenclose_unsafe5(fn, "", 0, 0, 0)) goto err1n ;
     }
 
@@ -459,20 +520,18 @@ static inline int write_swaps (char const *dir, swapent const *tab, size_t n, ch
     if (options & FSTAB_GOLB_UUID)
     {
       if (buffer_puts(&b, "swapon") < 0) goto err2 ;
-      if (tab[i].flags & FSTAB_FLAG_ISUUID)
-      {
-        if (buffer_puts(&b, " -U ") < 0
-         || buffer_puts(&b, s + tab[i].device) < 0) goto err2 ;
-      }
-      else if (tab[i].flags & FSTAB_FLAG_ISLABEL)
-      {
-        if (buffer_puts(&b, " -L ") < 0
-         || buffer_puts(&b, s + tab[i].device) < 0) goto err2 ;
-      }
       if (s[tab[i].opts])
       {
         if (buffer_puts(&b, " -o ") < 0
          || buffer_puts(&b, s + tab[i].opts) < 0) goto err2 ;
+      }
+      if (tab[i].flags & FSTAB_FLAG_ISUUID)
+      {
+        if (buffer_puts(&b, " -U ") < 0) goto err2 ;
+      }
+      else if (tab[i].flags & FSTAB_FLAG_ISLABEL)
+      {
+        if (buffer_puts(&b, " -L ") < 0) goto err2 ;
       }
     }
     else
@@ -485,66 +544,67 @@ static inline int write_swaps (char const *dir, swapent const *tab, size_t n, ch
       if (buffer_puts(&b, " }\n" EXECLINE_EXTBINPREFIX "exit 0") < 0) goto err2 ;
     if (buffer_putflush(&b, "\n", 1) < 0) goto err2 ;
     fd_close(fd) ;
-    goto ok2 ;
+
+    if (dlen)
+    {
+      memcpy(fn + dirlen + 1 + slen, "/dependencies.d/", 16) ;
+      memcpy(fn + dirlen + slen + 17, s + tab[i].binddep, dlen + 1) ;
+      if (!openwritenclose_unsafe5(fn, "", 0, 0, 0)) goto err3 ;
+    }
+
+    if (basedep)
+    {
+      memcpy(fn + dirlen + 1 + slen, "/dependencies.d/", 16) ;
+      memcpy(fn + dirlen + slen + 17, basedep, bdlen + 1) ;
+      if (!openwritenclose_unsafe5(fn, "", 0, 0, 0)) goto err3 ;
+    }
+
+    if (bundle && !(tab[i].flags & FSTAB_FLAG_NOAUTO))
+    {
+      memcpy(fn + dirlen + 1, bundle, blen) ;
+      memcpy(fn + dirlen + 1 + blen, "-swaps/contents.d/", 18) ;
+      memcpy(fn + dirlen + blen + 19, s + tab[i].servicename, slen + 1) ;
+      if (!openwritenclose_unsafe5(fn, "", 0, 0, 0)) goto err3 ;
+    }
+    continue ;
+
+   err3:
+    strerr_warnfu2sys("touch ", fn) ;
+    return 111 ;
    err2:
     fd_close(fd) ;
    err2n:
     strerr_warnfu2sys("write to ", fn) ;
     return 111 ;
-   ok2:
   }
 
-  if (bundle)
-  {
-    size_t blen = strlen(bundle) ;
-    char bdir[dirlen + blen + 19] ;
-    memcpy(bdir, dir, dirlen) ;
-    memcpy(bdir + dirlen, "-swaps", 6) ;
-    bdir[dirlen + 6] = '/' ;
-    memcpy(bdir + dirlen + 7, bundle, blen + 1) ;
-    if (mkdir(bdir, 0755) == -1) { strerr_warnfu2sys("mkdir ", bdir) ; return 111 ; }
-    memcpy(bdir + dirlen + blen + 7, "/type", 6) ;
-    if (!openwritenclose_unsafe5(bdir, "bundle\n", 7, 0, 0)) { strerr_warnfu2sys("write to ", bdir) ; return 111 ; }
-    memcpy(bdir + dirlen + blen + 7, "contents.d", 11) ;
-    if (mkdir(bdir, 0755) == -1) { strerr_warnfu2sys("mkdir ", bdir) ; return 111 ; }
-    bdir[dirlen + blen + 18] = '/' ;
-    for (size_t i = 0 ; i < n ; i++) if (!(tab[i].flags & FSTAB_FLAG_NOAUTO))
-    {
-      size_t slen = strlen(s + tab[i].servicename) ;
-      char sfn[dirlen + blen + 20 + slen] ;
-      memcpy(sfn, bdir, dirlen + blen + 19) ;
-      memcpy(sfn + dirlen + blen + 19, s + tab[i].servicename, slen + 1) ;
-      if (!openwritenclose_unsafe5(sfn, "", 0, 0, 0)) { strerr_warnfu2sys("touch ", sfn) ; return 111 ; }
-    }
-  }
   return 0 ;
 }
 
 static inline int write_bundle (char const *dir, char const *bundle)
 {
-  mode_t m = umask(0) ;
   size_t dirlen = strlen(dir) ;
   size_t blen = strlen(bundle) ;
-  char bdir[dirlen + 22 + 2 * blen] ;
+  char bdir[dirlen + 21 + 2 * blen] ;
   memcpy(bdir, dir, dirlen) ;
   bdir[dirlen] = '/' ;
-  memcpy(bdir + dirlen + 1, bundle, blen + 1) ;
-  if (mkdir(bdir, 0755) == -1) { strerr_warnfu2sys("mkdir ", bdir) ; return 111 ; }
-  memcpy(bdir + dirlen + blen + 1, "/type", 6) ;
+  memcpy(bdir + dirlen + 1, bundle, blen) ;
+  memcpy(bdir + dirlen + 1 + blen, "-mounts/type", 13) ;
   if (!openwritenclose_unsafe5(bdir, "bundle\n", 7, 0, 0)) { strerr_warnfu2sys("write to ", bdir) ; return 111 ; }
-  memcpy(bdir + dirlen + blen + 2, "contents.d", 11) ;
-  if (mkdir(bdir, 0755) == -1) { strerr_warnfu2sys("mkdir ", bdir) ; return 111 ; }
-  umask(m) ;
-  bdir[dirlen + blen + 13] = '/' ;
-  memcpy(bdir + dirlen + blen + 14, bundle, blen) ;
-  memcpy(bdir + dirlen + 14 + 2 * blen, "-swaps", 7) ;
+  memcpy(bdir + dirlen + 2 + blen, "swaps/type", 11) ;
+  if (!openwritenclose_unsafe5(bdir, "bundle\n", 7, 0, 0)) { strerr_warnfu2sys("write to ", bdir) ; return 111 ; }
+  memcpy(bdir + dirlen + 1 + blen, "/type", 6) ;
+  if (!openwritenclose_unsafe5(bdir, "bundle\n", 7, 0, 0)) { strerr_warnfu2sys("write to ", bdir) ; return 111 ; }
+  memcpy(bdir + dirlen + blen + 1, "/contents.d/", 12) ;
+  memcpy(bdir + dirlen + blen + 13, bundle, blen) ;
+  memcpy(bdir + dirlen + 13 + 2 * blen, "-swaps", 7) ;
   if (!openwritenclose_unsafe5(bdir, "", 0, 0, 0)) { strerr_warnfu2sys("touch ", bdir) ; return 111 ; }
-  memcpy(bdir + dirlen + 15 + 2 * blen, "mounts", 7) ;
+  memcpy(bdir + dirlen + 14 + 2 * blen, "mounts", 7) ;
   if (!openwritenclose_unsafe5(bdir, "", 0, 0, 0)) { strerr_warnfu2sys("touch ", bdir) ; return 111 ; }
   return 0 ;
 }
 
-static inline int doit (char const *fstab, char const *dir, uint64_t options, char const *bundle, char const *basedep, stralloc *sa)
+static inline int fstab_doit (char const *fstab, char const *dir, uint64_t options, char const *bundle, char const *basedep, stralloc *sa)
 {
   genalloc rootfs = GENALLOC_ZERO ;  /* fsent */
   genalloc swaps = GENALLOC_ZERO ;  /* swapent */
@@ -557,10 +617,9 @@ static inline int doit (char const *fstab, char const *dir, uint64_t options, ch
     errno = 0 ;
     mnt = getmntent(in) ;
     if (!mnt) break ;
-    if (mnt->mnt_dir[0] != '/') continue ;  /* "none" or "swap" or ... */
-    if (!mnt->mnt_dir[1]) continue ;  /* skip rootfs */
+    if (mnt->mnt_dir[0] == '/' && !mnt->mnt_dir[1]) continue ;  /* skip rootfs */
     if (options & FSTAB_GOLB_SKIPNOAUTO && hasmntopt(mnt, "noauto")) continue ;
-    if (!strcmp(mnt->mnt_type, "swap")) e = add_swap(mnt, &swaps, sa, options) ;
+    if (!strcmp(mnt->mnt_type, "swap")) e = add_swap(mnt, &swaps, sa, options, genalloc_s(fsent, &rootfs), genalloc_len(fsent, &rootfs)) ;
     else e = add_fs(mnt, &rootfs, sa, options) ;
     if (e)
     {
@@ -576,6 +635,8 @@ static inline int doit (char const *fstab, char const *dir, uint64_t options, ch
   }
   endmntent(in) ;
 
+  e = write_structure(dir, genalloc_s(fsent, &rootfs), genalloc_len(fsent, &rootfs), genalloc_s(swapent, &swaps), genalloc_len(swapent, &swaps), sa->s, bundle) ;
+  if (e) return e ;
   e = write_fses(dir, genalloc_s(fsent, &rootfs), genalloc_len(fsent, &rootfs), sa->s, options, bundle, basedep) ;
   if (e) return e ;
   e = write_swaps(dir, genalloc_s(swapent, &swaps), genalloc_len(swapent, &swaps), sa->s, options, bundle, basedep) ;
@@ -623,7 +684,7 @@ int main (int argc, char const *const *argv)
   {
     if (errno != ENOENT) strerr_diefu2sys(111, "access ", argv[0]) ;
   }
-  else strerr_dief2x(111, argv[0], "already exists") ;
+  else strerr_dief2x(111, argv[0], " already exists") ;
 
   {
     mode_t m = umask(0) ;
@@ -634,7 +695,7 @@ int main (int argc, char const *const *argv)
     memcpy(dir + dirlen, ":XXXXXX", 8) ;
     if (!mkdtemp(dir)) strerr_diefu2sys(111, "mkdtemp ", dir) ;
     umask(m) ;
-    e = doit(wgola[FSTAB_GOLA_FSTAB], dir, wgolb, wgola[FSTAB_GOLA_BUNDLE], wgola[FSTAB_GOLA_BASEDEP], &storage) ;
+    e = fstab_doit(wgola[FSTAB_GOLA_FSTAB], dir, wgolb, wgola[FSTAB_GOLA_BUNDLE], wgola[FSTAB_GOLA_BASEDEP], &storage) ;
     if (e)
     {
       rm_rf(dir) ;
