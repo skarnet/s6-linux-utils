@@ -76,19 +76,27 @@ struct swapent_s
   uint32_t flags ;
 } ;
 
-static int process_device (stralloc *sa, char const *dev, uint32_t *flags)
+static int process_device (stralloc *sa, char const *dev, uint32_t *flags, uint64_t options)
 {
   if (!strncmp(dev, "UUID=", 5))
   {
-    if (!string_quotes(sa, dev + 5) || !stralloc_0(sa)) dienomem() ;
-    *flags |= FSTAB_FLAG_ISUUID ;
+    if (options & FSTAB_GOLB_UUID)
+    {
+      dev += 5 ;
+      *flags |= FSTAB_FLAG_ISUUID ;
+    }
+    else strerr_warnw3x("weird device found: ", dev, " - you may want to run fstab2s6rc -u instead") ;
   }
   else if (!strncmp(dev, "LABEL=", 6))
   {
-    if (!string_quotes(sa, dev + 6) || !stralloc_0(sa)) dienomem() ;
-    *flags |= FSTAB_FLAG_ISLABEL ;
+    if (options & FSTAB_GOLB_UUID)
+    {
+      dev += 6 ;
+      *flags |= FSTAB_FLAG_ISLABEL ;
+    }
+    else strerr_warnw3x("weird device found: ", dev, " - you may want to run fstab2s6rc -u instead") ;
   }
-  else if (!string_quotes(sa, dev) || !stralloc_0(sa)) dienomem() ;
+  if (!string_quotes(sa, dev) || !stralloc_0(sa)) dienomem() ;
   return 0 ;
 }
 
@@ -189,13 +197,8 @@ static inline int add_fs (struct mntent *mnt, genalloc *root, stralloc *sa, uint
     return 1 ;
   }
   f.device = sa->len ;
-  if (options & FSTAB_GOLB_UUID)
-  {
-    e = process_device(sa, mnt->mnt_fsname, &f.flags) ;
-    if (e) return e ;
-  }
-  else
-    if (!string_quotes(sa, mnt->mnt_fsname) || !stralloc_0(sa)) dienomem() ;
+  e = process_device(sa, mnt->mnt_fsname, &f.flags, options) ;
+  if (e) return e ;
   f.mountpoint = sa->len ;
   if (!stralloc_cats(sa, mnt->mnt_dir + 1) || !stralloc_0(sa)) dienomem() ;
   f.qmountpoint = sa->len ;
@@ -221,13 +224,8 @@ static inline int add_swap (struct mntent *mnt, genalloc *ga, stralloc *sa, uint
   swapent f = { .flags = 0 } ;
   int e ;
   f.device = sa->len ;
-  if (options & FSTAB_GOLB_UUID)
-  {
-    e = process_device(sa, mnt->mnt_fsname, &f.flags) ;
-    if (e) return e ;
-  }
-  else
-    if (!string_quotes(sa, mnt->mnt_fsname) || !stralloc_0(sa)) dienomem() ;
+  e = process_device(sa, mnt->mnt_fsname, &f.flags, options) ;
+  if (e) return e ;
   e = process_opts(sa, mnt->mnt_opts, &f.flags, &f.opts) ;
   if (e) return e ;
   f.servicename = sa->len ;
