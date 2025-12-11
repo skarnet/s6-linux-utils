@@ -212,7 +212,7 @@ static inline int add_fs (struct mntent *mnt, genalloc *root, stralloc *sa, uint
   e = process_servicename(sa, mnt->mnt_dir, 0) ;
   if (e) return e ;
   f.binddep = sa->len - 1 ;
-  if (mnt->mnt_fsname[0] == '/' && hasmntopt(mnt, "bind")) adjust_binddep(&f.binddep, mnt->mnt_fsname + 1, genalloc_s(fsent, root), genalloc_len(fsent, root), sa->s) ;
+  if (mnt->mnt_fsname[0] == '/') adjust_binddep(&f.binddep, mnt->mnt_fsname + 1, genalloc_s(fsent, root), genalloc_len(fsent, root), sa->s) ;
   return fstab_insert_mount(&f, root, sa->s) ;
 }
 

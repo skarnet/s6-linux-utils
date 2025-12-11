@@ -33,7 +33,7 @@ effect of mounting these partitions when run by <a href="//skarnet.org/s6-rc/s6-
  <li> Parallelization. Dependencies between the mount points are respected: if <tt>/var</tt>
 and <tt>/var/log</tt> are mount points in <tt>/etc/fstab</tt>, s6-rc will not attempt to
 mount <tt>/var/log</tt> before <tt>/var</tt> is successfully mounted. But apart from this
-necessary serialization, s6-rc will performs in parallel as much as it can. </li>
+necessary serialization, s6-rc will perform in parallel as much as it can. </li>
  <li> Granularity. <tt>mount -a</tt> in the boot sequence treats all the mounts as one
 unit; and although the output of fstab2s6rc can provide a bundle listing all the mounts,
 each mount is available as a separate service. </li>
