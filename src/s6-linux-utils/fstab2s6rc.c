@@ -354,10 +354,10 @@ static inline int write_fses (char const *dir, fsent const *tab, unsigned int n,
      err1n:
       strerr_warnfu2sys("write to ", fn) ;
       return 111 ;
-     ok1:
     }
     else if (!openwritenclose_unsafe5(fn, "", 0, 0, 0)) goto err2n ;
 
+   ok1:
     memcpy(fn + dirlen + 2 + slen, "up", 3) ;
     fd = open_create(fn) ;
     if (fd == -1) { strerr_warnfu3sys("open ", fn, " for writing") ; return 111 ; }
@@ -505,10 +505,10 @@ static inline int write_swaps (char const *dir, swapent const *tab, unsigned int
      err1n:
       strerr_warnfu2sys("write to ", fn) ;
       return 111 ;
-     ok1:
     }
     else if (!openwritenclose_unsafe5(fn, "", 0, 0, 0)) goto err2n ;
 
+   ok1:
     memcpy(fn + dirlen + 2 + slen, "up", 3) ;
     fd = open_create(fn) ;
     if (fd == -1) { strerr_warnfu3sys("open ", fn, " for writing") ; return 111 ; }
